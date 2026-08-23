@@ -1,4 +1,0 @@
-RESOLVE
-Γ£ª ${q.slice(0, 52)}...
-DECLINE
-AUTHORIZE
