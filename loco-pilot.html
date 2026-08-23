@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRIS | Loco Pilot — Live Operational Panel</title>
+    <meta name="description" content="RailVerse AI Loco Pilot Live Assistance Panel — Situational awareness and risk management for locomotive pilots.">
+
+    <!-- Indian Railways / LED Station Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=VT323&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rajdhani', 'sans-serif'],
+                        mono: ['Share Tech Mono', 'monospace'],
+                        led: ['VT323', 'monospace'],
+                    },
+                    colors: {
+                        cmd: {
+                            bg: '#01050e',
+                            panel: '#041024',
+                            border: '#1a365d',
+                            accent: '#ffb300',
+                            irblue: '#003399',
+                            text: '#a0aec0',
+                            bright: '#ffffff',
+                            danger: '#ff3333',
+                            warning: '#ff9933',
+                            success: '#00ff66'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #01050e;
+            color: #a0aec0;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #041024 0%, #01050e 100%);
+        }
+
+        /* ── Command Panel Base ── */
+        .cmd-panel {
+            background: rgba(4, 16, 36, 0.9);
+            border: 1px solid #1a365d;
+            position: relative;
+        }
+
+        .cmd-panel::before,
+        .cmd-panel::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border: 2px solid #ffb300;
+            pointer-events: none;
+        }
+
+        .cmd-panel::before {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .cmd-panel::after {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .cmd-header {
+            background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 229, 255, 0.03) 10px, rgba(0, 229, 255, 0.03) 20px);
+            border-bottom: 1px solid #1a365d;
+        }
+
+        /* Status dots */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            border-radius: 50%;
+        }
+
+        .status-dot.green {
+            background: #00ff66;
+            box-shadow: 0 0 5px #00ff66;
+        }
+
+        .status-dot.red {
+            background: #ff2a2a;
+            box-shadow: 0 0 5px #ff2a2a;
+        }
+
+        .status-dot.amber {
+            background: #ffb300;
+            box-shadow: 0 0 5px #ffb300;
+        }
+
+        .status-dot.cyan {
+            background: #00e5ff;
+            box-shadow: 0 0 5px #00e5ff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1a365d;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00e5ff;
+        }
+
+        /* ── Loco Pilot Specific Styles ── */
+
+        /* Speed card severity states */
+        .loco-speed-card {
+            transition: border-color 0.6s ease, box-shadow 0.6s ease, background-color 0.6s ease;
+        }
+
+        .loco-speed-card.severity-normal {
+            border-color: #00ff66;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.1);
+        }
+
+        .loco-speed-card.severity-warning {
+            border-color: #ffb300;
+            box-shadow: 0 0 20px rgba(255, 179, 0, 0.15);
+        }
+
+        .loco-speed-card.severity-high {
+            border-color: #ff9933;
+            box-shadow: 0 0 25px rgba(255, 153, 51, 0.2);
+        }
+
+        .loco-speed-card.severity-critical {
+            border-color: #ff3333;
+            box-shadow: 0 0 30px rgba(255, 51, 51, 0.25);
+        }
+
+        /* Risk cards */
+        .risk-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+        }
+
+        .risk-card:hover {
+            transform: translateX(2px);
+        }
+
+        .risk-card.risk-critical {
+            border-left-color: #ff3333;
+            background: rgba(255, 51, 51, 0.05);
+        }
+
+        .risk-card.risk-high {
+            border-left-color: #ff9933;
+            background: rgba(255, 153, 51, 0.05);
+        }
+
+        .risk-card.risk-medium {
+            border-left-color: #ffb300;
+            background: rgba(255, 179, 0, 0.05);
+        }
+
+        .risk-card.risk-low {
+            border-left-color: #00e5ff;
+            background: rgba(0, 229, 255, 0.03);
+        }
+
+        .risk-card.risk-resolved {
+            border-left-color: #00ff66;
+            background: rgba(0, 255, 102, 0.03);
+            opacity: 0.7;
+        }
+
+        /* Collaboration timeline */
+        .collab-event {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .collab-event::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 24px;
+            bottom: -8px;
+            width: 1px;
+            background: #1a365d;
+        }
+
+        .collab-event:last-child::before {
+            display: none;
+        }
+
+        .collab-dot {
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid;
+        }
+
+        .collab-dot.dot-success {
+            border-color: #00ff66;
+            background: rgba(0, 255, 102, 0.3);
+        }
+
+        .collab-dot.dot-warning {
+            border-color: #ffb300;
+            background: rgba(255, 179, 0, 0.3);
+        }
+
+        .collab-dot.dot-danger {
+            border-color: #ff3333;
+            background: rgba(255, 51, 51, 0.3);
+        }
+
+        .collab-dot.dot-info {
+            border-color: #00e5ff;
+            background: rgba(0, 229, 255, 0.3);
+        }
+
+        .collab-dot.dot-monitoring {
+            border-color: #ffb300;
+            background: rgba(255, 179, 0, 0.3);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 179, 0, 0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(255, 179, 0, 0); }
+        }
+
+        /* Event timeline */
+        .timeline-event {
+            position: relative;
+            padding-left: 20px;
+            padding-bottom: 6px;
+        }
+
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 8px;
+            bottom: -2px;
+            width: 1px;
+            background: #1a365d;
+        }
+
+        .timeline-event:last-child::before {
+            display: none;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+        }
+
+        /* Upcoming event cards */
+        .upcoming-card {
+            border-left: 3px solid #1a365d;
+            transition: border-color 0.3s;
+        }
+
+        .upcoming-card:hover {
+            border-left-color: #00e5ff;
+        }
+
+        /* Simulation bar */
+        .sim-scenario-btn {
+            transition: all 0.2s;
+        }
+
+        .sim-scenario-btn.active {
+            background: rgba(255, 179, 0, 0.15);
+            border-color: #ffb300;
+            color: #ffb300;
+        }
+
+        /* Data trust badges */
+        .data-badge {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .data-badge.badge-live {
+            background: rgba(0, 255, 102, 0.15);
+            color: #00ff66;
+            border: 1px solid rgba(0, 255, 102, 0.3);
+        }
+
+        .data-badge.badge-simulated {
+            background: rgba(0, 229, 255, 0.15);
+            color: #00e5ff;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+        }
+
+        .data-badge.badge-ai {
+            background: rgba(255, 179, 0, 0.15);
+            color: #ffb300;
+            border: 1px solid rgba(255, 179, 0, 0.3);
+        }
+
+        .data-badge.badge-stale {
+            background: rgba(255, 51, 51, 0.15);
+            color: #ff3333;
+            border: 1px solid rgba(255, 51, 51, 0.3);
+        }
+
+        .data-badge.badge-route {
+            background: rgba(100, 140, 200, 0.15);
+            color: #8ba8c8;
+            border: 1px solid rgba(100, 140, 200, 0.3);
+        }
+
+        /* Leaflet overrides for pilot map */
+        #loco-map {
+            background: #000;
+        }
+
+        #loco-map .leaflet-container {
+            background: #000;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: rgba(0, 0, 0, 0.9);
+            color: #ffb300;
+            border: 1px solid #ffb300;
+            border-radius: 0;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+        }
+
+        .leaflet-popup-tip {
+            background: #ffb300;
+        }
+
+        /* Advisory banner */
+        .advisory-banner {
+            background: repeating-linear-gradient(
+                -45deg,
+                rgba(255, 179, 0, 0.05),
+                rgba(255, 179, 0, 0.05) 10px,
+                transparent 10px,
+                transparent 20px
+            );
+            border: 1px solid rgba(255, 179, 0, 0.3);
+        }
+
+        /* Risk detail drawer */
+        .risk-drawer {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .risk-drawer.open {
+            max-height: 600px;
+            opacity: 1;
+        }
+
+        /* Severity pulse for critical */
+        @keyframes severity-pulse {
+            0%, 100% { border-color: #ff3333; }
+            50% { border-color: #ff6666; box-shadow: 0 0 20px rgba(255, 51, 51, 0.3); }
+        }
+
+        .severity-pulse-critical {
+            animation: severity-pulse 2s ease infinite;
+        }
+
+        /* Smooth fade-in */
+        @keyframes loco-fade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loco-fade-in {
+            animation: loco-fade 0.3s ease forwards;
+        }
+
+        /* Live changes indicator */
+        .change-up { color: #00ff66; }
+        .change-down { color: #ff3333; }
+        .change-stable { color: #4a6580; }
+        .change-new { color: #ffb300; }
+
+        /* System health grid */
+        .health-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        .health-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .health-dot.online {
+            background: #00ff66;
+            box-shadow: 0 0 4px #00ff66;
+        }
+
+        .health-dot.stale {
+            background: #ffb300;
+            box-shadow: 0 0 4px #ffb300;
+        }
+
+        .health-dot.offline {
+            background: #ff3333;
+            box-shadow: 0 0 4px #ff3333;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .loco-main-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .loco-bottom-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="flex flex-col h-screen overflow-hidden selection:bg-cmd-accent selection:text-black">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  LOCO PILOT OPERATIONAL PANEL                          -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <div class="flex flex-col h-full">
+
+        <!-- ── TOP: OPERATIONAL HEADER ── -->
+        <header class="cmd-panel px-4 py-2 flex flex-wrap items-center gap-x-6 gap-y-1 shrink-0 border-b border-cmd-border" id="loco-header">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 17v4"/><path d="M8 21h8"/><rect x="7" y="6" width="10" height="6" rx="1"/><circle cx="9" cy="15" r="1"/><circle cx="15" cy="15" r="1"/></svg>
+                <span class="font-mono text-sm text-cmd-accent font-bold tracking-widest">LOCO PILOT — LIVE OPERATIONAL PANEL</span>
+            </div>
+
+            <div class="flex items-center gap-4 font-mono text-[11px]" id="train-selector">
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">TRAIN NO.</span>
+                    <input type="text" id="live-train-input" value="22504" class="bg-[#041024] border border-[#1a365d] text-[#00e5ff] font-bold px-2 py-1 w-20 outline-none focus:border-[#00e5ff]" />
+                    <button onclick="window.RailRadarService.startTracking()" class="bg-[#00e5ff]/10 border border-[#00e5ff]/40 text-[#00e5ff] px-3 py-1 hover:bg-[#00e5ff]/20 transition-colors">TRACK TRAIN</button>
+                </div>
+                <div id="live-train-details" class="flex items-center gap-4 hidden">
+                    <div><span class="text-gray-500">TRAIN</span> <span id="hdr-train" class="text-cmd-bright font-bold">---</span></div>
+                    <div><span class="text-gray-500">NAME</span> <span id="hdr-name" class="text-[#00e5ff]">---</span></div>
+                    <div><span class="text-gray-500">SECTION</span> <span id="hdr-section" class="text-cmd-bright">---</span></div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 font-mono text-[11px] ml-auto">
+                <div class="flex items-center gap-2 px-2 py-1 border border-[#00e5ff]/30 bg-[#00e5ff]/5 rounded">
+                    <span class="status-dot cyan animate-pulse"></span>
+                    <span class="text-[#00e5ff] font-bold tracking-widest" id="sim-mode-badge">SIMULATION MODE</span>
+                </div>
+                <div><span class="text-gray-500">TIME</span> <span id="hdr-clock" class="text-cmd-bright font-bold font-led text-base">--:--:--</span></div>
+                <div id="hdr-data-status">
+                    <span class="text-gray-500">DATA</span>
+                    <span class="text-cmd-success" id="hdr-data-text">LIVE</span>
+                    <span class="text-gray-500 text-[10px]" id="hdr-data-age">0.8s ago</span>
+                </div>
+                <a href="index.html" class="px-3 py-1 border border-cmd-accent/40 text-cmd-accent hover:bg-cmd-accent/10 transition-colors text-[11px] tracking-wider">
+                    ◄ COMMAND CENTER
+                </a>
+            </div>
+        </header>
+
+        <!-- ── ADVISORY BANNER ── -->
+        <div class="advisory-banner px-4 py-1 text-center font-mono text-[10px] text-cmd-accent tracking-widest shrink-0">
+            ADVISORY — ALL OPERATIONAL RECOMMENDATIONS REQUIRE PILOT / AUTHORISED RAILWAY PROCEDURE — THIS SYSTEM DOES NOT CONTROL THE LOCOMOTIVE
+        </div>
+
+        <!-- ── MAIN CONTENT AREA ── -->
+        <main class="flex-1 overflow-y-auto p-3 space-y-3" style="scrollbar-width: thin; scrollbar-color: #1f2937 #000000;">
+
+            <!-- ROW 1: Train Status | Map | Active Risks -->
+            <div class="loco-main-grid grid gap-3" style="grid-template-columns: 280px 1fr 340px;">
+
+                <!-- LEFT: Train Status -->
+                <div class="flex flex-col gap-3">
+                    <!-- Speed Card -->
+                    <div class="cmd-panel p-4 loco-speed-card severity-normal" id="speed-card">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="font-mono text-[10px] text-gray-500 tracking-widest">CURRENT SPEED</span>
+                            <span class="data-badge badge-simulated">SIMULATED</span>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-led text-5xl text-cmd-bright" id="val-speed">108</span>
+                            <span class="font-mono text-sm text-gray-500">km/h</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-3 font-mono text-[11px]">
+                            <div>
+                                <div class="text-gray-500">PERMITTED</div>
+                                <div class="text-cmd-success font-bold text-lg" id="val-permitted">120</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">TARGET</div>
+                                <div class="text-cmd-warning font-bold text-lg" id="val-target">120</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-800 font-mono text-[11px]">
+                            <div class="flex justify-between"><span class="text-gray-500">SPEED DIFF</span><span id="val-diff" class="text-cmd-success">-12 km/h</span></div>
+                            <div class="flex justify-between mt-1"><span class="text-gray-500">ACCEL</span><span id="val-accel" class="text-cmd-bright">+0.18 m/s²</span></div>
+                        </div>
+                        <!-- Speed bar visual -->
+                        <div class="mt-3 h-2 bg-gray-900 rounded-full overflow-hidden relative">
+                            <div id="speed-bar" class="h-full rounded-full transition-all duration-500" style="width: 90%; background: #00ff66;"></div>
+                            <div id="speed-limit-marker" class="absolute top-0 h-full w-0.5 bg-white/50" style="left: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Brake & Direction -->
+                    <div class="cmd-panel p-3">
+                        <div class="grid grid-cols-2 gap-3 font-mono text-[11px]">
+                            <div>
+                                <div class="text-gray-500 text-[10px]">BRAKE</div>
+                                <div class="text-cmd-success font-bold" id="val-brake">RELEASED</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500 text-[10px]">THROTTLE</div>
+                                <div class="text-cmd-bright font-bold" id="val-throttle">NOTCH 4</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Route Info -->
+                    <div class="cmd-panel p-3">
+                        <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-2">ROUTE INFORMATION</div>
+                        <div class="font-mono text-[11px] space-y-2">
+                            <div class="flex justify-between"><span class="text-gray-500">CURRENT</span><span class="text-cmd-bright font-bold" id="val-current-stn">BHUBANESWAR</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">NEXT</span><span class="text-[#00e5ff] font-bold" id="val-next-stn">VISAKHAPATNAM</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">DISTANCE</span><span class="text-cmd-bright" id="val-distance">42.6 KM</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">ETA</span><span class="text-cmd-bright" id="val-eta">14:57</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">SIGNAL</span><span class="text-cmd-success" id="val-signal">● GREEN</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">DIST TO SIG</span><span class="text-cmd-bright" id="val-sig-dist">3.2 KM</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Weather -->
+                    <div class="cmd-panel p-3">
+                        <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-2">WEATHER <span class="data-badge badge-simulated ml-1">SIMULATED</span></div>
+                        <div class="font-mono text-[11px] space-y-1">
+                            <div class="flex justify-between"><span class="text-gray-500">CONDITION</span><span class="text-cmd-bright" id="val-weather">PARTLY CLOUDY</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">VISIBILITY</span><span class="text-cmd-bright" id="val-visibility">2400 m</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">RAINFALL</span><span class="text-cmd-bright" id="val-rainfall">NONE</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CENTER: Pilot Map -->
+                <div class="cmd-panel flex flex-col min-h-[400px]">
+                    <div class="cmd-header px-3 py-1.5 flex justify-between items-center">
+                        <span class="font-mono text-[11px] text-cmd-accent uppercase flex items-center gap-2">
+                            <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> PILOT ROUTE VIEW
+                        </span>
+                        <div class="flex items-center gap-4 font-mono text-[10px]">
+                            <label class="flex items-center gap-1 text-gray-400 hover:text-cmd-bright cursor-pointer">
+                                <input type="checkbox" id="toggle-follow" checked class="accent-[#00e5ff]" onchange="window.RailRadarService.toggleFollow()"> FOLLOW TRAIN
+                            </label>
+                            <span class="text-gray-500">LAT <span id="hud-lat" class="text-cmd-bright">--</span></span>
+                            <span class="text-gray-500">LNG <span id="hud-lng" class="text-cmd-bright">--</span></span>
+                            <span class="text-gray-500">ZOOM <span id="hud-zoom" class="text-cmd-bright">--</span></span>
+                        </div>
+                    </div>
+                    <div class="flex-1 relative" id="loco-map-container">
+                        <div id="loco-map" class="absolute inset-0 z-10"></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Active Risks -->
+                <div class="cmd-panel flex flex-col max-h-[600px]">
+                    <div class="cmd-header px-3 py-1.5 flex justify-between items-center">
+                        <span class="font-mono text-[11px] text-cmd-accent uppercase flex items-center gap-2">
+                            <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> ACTIVE RISKS
+                        </span>
+                        <span class="font-mono text-[11px] font-bold" id="risk-count-badge">0</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-2 space-y-2" id="risk-panel" style="scrollbar-width: thin; scrollbar-color: #1f2937 #000000;">
+                        <div class="text-center font-mono text-[11px] text-gray-600 py-8" id="risk-empty">
+                            <div class="text-2xl mb-2">✓</div>
+                            NO ACTIVE RISKS<br>
+                            <span class="text-[10px]">SYSTEM MONITORING</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: Next 15 Minutes -->
+            <div class="cmd-panel p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-mono text-[11px] text-cmd-accent uppercase flex items-center gap-2">
+                        <i data-lucide="clock" class="w-3.5 h-3.5"></i> NEXT 15 MINUTES — UPCOMING EVENTS
+                    </span>
+                    <span class="data-badge badge-route">ROUTE DATA</span>
+                </div>
+                <div class="flex gap-3 overflow-x-auto pb-1" id="upcoming-events" style="scrollbar-width: thin; scrollbar-color: #1f2937 #000000;">
+                    <div class="text-center font-mono text-[11px] text-gray-600 py-4 w-full">LOADING ROUTE DATA...</div>
+                </div>
+            </div>
+
+            <!-- ROW 3: Collaboration | Live Changes -->
+            <div class="grid gap-3" style="grid-template-columns: 1fr 280px;">
+                <!-- Collaboration Panel -->
+                <div class="cmd-panel flex flex-col max-h-[300px]">
+                    <div class="cmd-header px-3 py-1.5 flex justify-between items-center">
+                        <span class="font-mono text-[11px] text-cmd-accent uppercase flex items-center gap-2">
+                            <i data-lucide="radio" class="w-3.5 h-3.5"></i> OPERATIONS COLLABORATION
+                        </span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-3 space-y-2" id="collab-panel" style="scrollbar-width: thin; scrollbar-color: #1f2937 #000000;">
+                        <div class="text-center font-mono text-[11px] text-gray-600 py-4" id="collab-empty">
+                            NO ACTIVE COLLABORATION EVENTS
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Changes -->
+                <div class="cmd-panel p-3">
+                    <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-2 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-3 h-3"></i> LIVE CHANGES
+                    </div>
+                    <div class="font-mono text-[11px] space-y-2" id="live-changes">
+                        <div class="flex justify-between"><span class="text-gray-500">↑ SPEED</span><span class="text-cmd-bright" id="chg-speed">108 km/h</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">→ VISIBILITY</span><span class="text-cmd-bright" id="chg-visibility">2400 m</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">→ SIGNAL</span><span class="text-cmd-success" id="chg-signal">UNCHANGED</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">→ TRACK</span><span class="text-cmd-bright" id="chg-track">CLEAR</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: System Health | Event Timeline | Nearby Traffic -->
+            <div class="loco-bottom-grid grid gap-3" style="grid-template-columns: 240px 1fr 240px;">
+                <!-- System Health -->
+                <div class="cmd-panel p-3">
+                    <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-2 flex items-center gap-2">
+                        <i data-lucide="server" class="w-3 h-3"></i> SYSTEM HEALTH
+                    </div>
+                    <div class="font-mono text-[11px]" id="system-health">
+                        <div class="health-item"><div class="health-dot online"></div><span class="text-gray-400">GPS</span><span class="ml-auto text-cmd-success text-[10px]">ONLINE</span></div>
+                        <div class="health-item"><div class="health-dot online"></div><span class="text-gray-400">TELEMETRY</span><span class="ml-auto text-cmd-success text-[10px]">ONLINE</span></div>
+                        <div class="health-item"><div class="health-dot online"></div><span class="text-gray-400">SIGNAL DATA</span><span class="ml-auto text-cmd-success text-[10px]">ONLINE</span></div>
+                        <div class="health-item"><div class="health-dot online"></div><span class="text-gray-400">TRACK DATA</span><span class="ml-auto text-cmd-success text-[10px]">ONLINE</span></div>
+                        <div class="health-item"><div class="health-dot online"></div><span class="text-gray-400">WEATHER</span><span class="ml-auto text-cmd-success text-[10px]">ONLINE</span></div>
+                        <div class="health-item"><div class="health-dot online"></div><span class="text-gray-400">CONTROL LINK</span><span class="ml-auto text-cmd-success text-[10px]">ONLINE</span></div>
+                        <div class="health-item"><div class="health-dot online"></div><span class="text-gray-400">RISK ENGINE</span><span class="ml-auto text-cmd-success text-[10px]">ONLINE</span></div>
+                    </div>
+                </div>
+
+                <!-- Event Timeline -->
+                <div class="cmd-panel flex flex-col max-h-[250px]">
+                    <div class="cmd-header px-3 py-1.5 flex justify-between items-center">
+                        <span class="font-mono text-[11px] text-cmd-accent uppercase flex items-center gap-2">
+                            <i data-lucide="list" class="w-3.5 h-3.5"></i> EVENT TIMELINE
+                        </span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-3" id="event-timeline" style="scrollbar-width: thin; scrollbar-color: #1f2937 #000000;">
+                        <!-- Events will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Nearby Traffic -->
+                <div class="cmd-panel p-3">
+                    <div class="font-mono text-[10px] text-gray-500 tracking-widest mb-2 flex items-center gap-2">
+                        <i data-lucide="train-front" class="w-3 h-3"></i> NEARBY TRAFFIC
+                    </div>
+                    <div class="font-mono text-[11px] space-y-2" id="nearby-traffic">
+                        <div class="border border-gray-800 p-2 bg-black/30">
+                            <div class="flex justify-between"><span class="text-cmd-bright font-bold">TRN 12301</span><span class="text-[#00e5ff]">AHEAD</span></div>
+                            <div class="flex justify-between mt-1"><span class="text-gray-500">12.4 km</span><span class="text-gray-400">118 km/h</span></div>
+                        </div>
+                        <div class="border border-gray-800 p-2 bg-black/30">
+                            <div class="flex justify-between"><span class="text-cmd-bright font-bold">TRN 15003</span><span class="text-cmd-warning">BEHIND</span></div>
+                            <div class="flex justify-between mt-1"><span class="text-gray-500">7.8 km</span><span class="text-gray-400">94 km/h</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Station Approach Panel (hidden by default) -->
+            <div class="cmd-panel p-3 hidden" id="station-approach-panel">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-mono text-[11px] text-[#00e5ff] uppercase flex items-center gap-2 font-bold">
+                        <i data-lucide="square" class="w-3.5 h-3.5"></i> STATION APPROACH
+                    </span>
+                    <span class="data-badge badge-simulated">SIMULATED</span>
+                </div>
+                <div class="grid grid-cols-6 gap-3 font-mono text-[11px]">
+                    <div><span class="text-gray-500 text-[10px] block">STATION</span><span class="text-cmd-bright font-bold" id="sa-station">--</span></div>
+                    <div><span class="text-gray-500 text-[10px] block">DISTANCE</span><span class="text-cmd-bright" id="sa-distance">--</span></div>
+                    <div><span class="text-gray-500 text-[10px] block">PLATFORM</span><span class="text-cmd-bright" id="sa-platform">--</span></div>
+                    <div><span class="text-gray-500 text-[10px] block">CROWD</span><span class="text-cmd-bright" id="sa-crowd">--</span></div>
+                    <div><span class="text-gray-500 text-[10px] block">INC. TRAINS</span><span class="text-cmd-bright" id="sa-trains">--</span></div>
+                    <div><span class="text-gray-500 text-[10px] block">CONTROL</span><span class="text-cmd-success" id="sa-control">CONNECTED</span></div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ── BOTTOM: SIMULATION CONTROLS ── -->
+        <footer class="cmd-panel px-4 py-2 flex items-center gap-3 shrink-0 border-t border-cmd-border flex-wrap">
+            <span class="font-mono text-[10px] text-gray-500 tracking-widest shrink-0">SCENARIO:</span>
+            <div class="flex gap-1 flex-wrap">
+                <button onclick="startScenario(1)" class="sim-scenario-btn active font-mono text-[10px] px-3 py-1 border border-gray-700 text-gray-400 hover:text-cmd-accent hover:border-cmd-accent transition-all" id="scn-1">① NORMAL</button>
+                <button onclick="startScenario(2)" class="sim-scenario-btn font-mono text-[10px] px-3 py-1 border border-gray-700 text-gray-400 hover:text-cmd-accent hover:border-cmd-accent transition-all" id="scn-2">② SPEED RESTRICT</button>
+                <button onclick="startScenario(3)" class="sim-scenario-btn font-mono text-[10px] px-3 py-1 border border-gray-700 text-gray-400 hover:text-cmd-accent hover:border-cmd-accent transition-all" id="scn-3">③ WEATHER</button>
+                <button onclick="startScenario(4)" class="sim-scenario-btn font-mono text-[10px] px-3 py-1 border border-gray-700 text-gray-400 hover:text-cmd-accent hover:border-cmd-accent transition-all" id="scn-4">④ TRACK HAZARD</button>
+                <button onclick="startScenario(5)" class="sim-scenario-btn font-mono text-[10px] px-3 py-1 border border-gray-700 text-gray-400 hover:text-cmd-accent hover:border-cmd-accent transition-all" id="scn-5">⑤ FAILED RESPONSE</button>
+            </div>
+            <div class="ml-auto flex gap-2 shrink-0">
+                <button onclick="resetSimulation()" class="font-mono text-[10px] px-4 py-1.5 border border-gray-600 text-gray-400 hover:text-white hover:border-white transition-all tracking-wider">RESET</button>
+                <button onclick="simulateFailure()" class="font-mono text-[10px] px-4 py-1.5 border border-cmd-danger text-cmd-danger hover:bg-cmd-danger hover:text-black transition-all tracking-wider font-bold" id="btn-fail">SIMULATE FAILURE</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  JAVASCRIPT ENGINE                                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script>
+        // ─────────────────────────────────────────────────
+        //  ROUTE DATA — VIVEK EXPRESS 22504 (HWH → MAS segment)
+        //  Mid-journey corridor: Bhubaneswar → Visakhapatnam → Vijayawada
+        // ─────────────────────────────────────────────────
+        const ROUTE_STATIONS = [
+            { id: 'HWH',  name: 'HOWRAH',          lat: 22.5839, lng: 88.3221, dist: 0,   platform: 15 },
+            { id: 'KGP',  name: 'KHARAGPUR JN',    lat: 22.3434, lng: 87.3183, dist: 114, platform: 8  },
+            { id: 'BLS',  name: 'BALASORE',         lat: 21.4942, lng: 86.9340, dist: 211, platform: 4  },
+            { id: 'BBS',  name: 'BHUBANESWAR',      lat: 20.2961, lng: 85.8189, dist: 370, platform: 6  },
+            { id: 'VSKP', name: 'VISAKHAPATNAM',    lat: 17.6868, lng: 83.2185, dist: 660, platform: 9  },
+            { id: 'RJY',  name: 'RAJAHMUNDRY',      lat: 17.0057, lng: 81.7801, dist: 789, platform: 5  },
+            { id: 'BZA',  name: 'VIJAYAWADA JN',    lat: 16.5193, lng: 80.6278, dist: 930, platform: 10 },
+            { id: 'MAS',  name: 'CHENNAI CENTRAL',  lat: 13.0827, lng: 80.2707, dist: 1195,platform: 12 }
+        ];
+
+        const ROUTE_EVENTS = [
+            { distFromStart: 120, type: 'LEVEL_CROSSING', name: 'LC-12 KHARAGPUR EAST ROAD' },
+            { distFromStart: 220, type: 'BRIDGE', name: 'SUBARNAREKHA RIVER BRIDGE' },
+            { distFromStart: 310, type: 'SPEED_RESTRICTION', limit: 75, reason: 'TEMPORARY — TRACK MAINTENANCE' },
+            { distFromStart: 380, type: 'LEVEL_CROSSING', name: 'LC-34 CUTTACK BYPASS' },
+            { distFromStart: 450, type: 'TUNNEL', name: 'EASTERN GHATS TUNNEL-1' },
+            { distFromStart: 520, type: 'SPEED_RESTRICTION', limit: 80, reason: 'CURVE SECTION — GHATS' },
+            { distFromStart: 610, type: 'BRIDGE', name: 'GODAVARI RIVER BRIDGE' },
+            { distFromStart: 700, type: 'LEVEL_CROSSING', name: 'LC-88 RAJAHMUNDRY ROAD' },
+            { distFromStart: 870, type: 'SPEED_RESTRICTION', limit: 70, reason: 'STATION APPROACH — VIJAYAWADA' }
+        ];
+
+        // ─────────────────────────────────────────────────
+        //  CENTRALIZED OPERATIONAL STATE
+        // ─────────────────────────────────────────────────
+        let locoState = {
+            trainNumber: '22504',
+            trainName: 'VIVEK EXPRESS',
+            locoNumber: 'WAG-9 31047',
+
+            speed: 92,
+            permittedSpeed: 110,
+            targetSpeed: 110,
+            acceleration: 0.12,
+
+            location: {
+                lat: 20.50,
+                lng: 85.90,
+                section: 'BBS → VSKP',
+                distFromStart: 390
+            },
+
+            direction: 'FORWARD',
+
+            nextStation: 'VISAKHAPATNAM',
+            nextStationId: 'VSKP',
+            distanceToNextStation: 270,
+            eta: '',
+
+            signal: {
+                state: 'GREEN',
+                distance: 3.2
+            },
+
+            brakeStatus: 'RELEASED',
+            throttleStatus: 'NOTCH 4',
+
+            weather: {
+                condition: 'PARTLY CLOUDY',
+                visibility: 2400,
+                rainfall: 'NONE',
+                temperature: 32
+            },
+
+            track: {
+                condition: 'NORMAL',
+                restriction: null,
+                restrictionDistance: null
+            },
+
+            nearbyTrains: [
+                { id: '12301', distance: 12.4, speed: 118, direction: 'AHEAD' },
+                { id: '15003', distance: 7.8, speed: 94, direction: 'BEHIND' }
+            ],
+
+            upcomingEvents: [],
+            risks: [],
+            collaborationEvents: [],
+            timelineEvents: [],
+
+            systemHealth: {
+                gps: 'ONLINE',
+                telemetry: 'ONLINE',
+                signalData: 'ONLINE',
+                trackData: 'ONLINE',
+                weather: 'ONLINE',
+                controlLink: 'ONLINE',
+                riskEngine: 'ONLINE'
+            },
+
+            timestamp: Date.now(),
+            lastUpdate: Date.now()
+        };
+
+        let riskIdCounter = 0;
+        let currentScenario = 1;
+        let simInterval = null;
+        let simStep = 0;
+        let simRunning = false;
+        let locoMap = null;
+        let trainMarker = null;
+        let routeLine = null;
+        let mapInitialized = false;
+
+        // ─────────────────────────────────────────────────
+        //  RISK ENGINE
+        // ─────────────────────────────────────────────────
+
+        function createRisk(params) {
+            riskIdCounter++;
+            const risk = {
+                id: `RISK-${String(riskIdCounter).padStart(4, '0')}`,
+                category: params.category || 'SPEED',
+                severity: params.severity || 'MEDIUM',
+                title: params.title || '',
+                description: params.description || '',
+                trigger: params.trigger || '',
+                confidence: params.confidence || 85,
+                distanceToImpact: params.distanceToImpact ?? null,
+                timeToImpact: params.timeToImpact ?? null,
+                currentStatus: 'MONITORING',
+                nextStep: params.nextStep || 'Monitor operational conditions.',
+                source: params.source || 'RISK ENGINE',
+                acknowledged: false,
+                resolved: false,
+                escalated: false,
+                why: params.why || '',
+                dataSources: params.dataSources || ['Train telemetry', 'Route data'],
+                outcome: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            locoState.risks.push(risk);
+            addTimelineEvent(`⚠ ${risk.severity}: ${risk.title}`, risk.severity === 'CRITICAL' ? 'danger' : (risk.severity === 'HIGH' ? 'warning' : 'info'));
+            addCollabEvent('SYSTEM', `Risk detected: ${risk.title}`, 'DETECTED', 'info');
+            renderRisks();
+            return risk;
+        }
+
+        function updateRiskStatus(riskId, newStatus) {
+            const risk = locoState.risks.find(r => r.id === riskId);
+            if (!risk) return;
+            risk.currentStatus = newStatus;
+            risk.updatedAt = new Date().toISOString();
+            renderRisks();
+        }
+
+        function acknowledgeRisk(riskId) {
+            const risk = locoState.risks.find(r => r.id === riskId);
+            if (!risk) return;
+            risk.acknowledged = true;
+            risk.currentStatus = 'ACKNOWLEDGED';
+            risk.updatedAt = new Date().toISOString();
+            addTimelineEvent(`✓ Pilot acknowledged: ${risk.title}`, 'success');
+            addCollabEvent('LOCO PILOT', `Alert acknowledged.`, 'ACKNOWLEDGED', 'success');
+            renderRisks();
+        }
+
+        function resolveRisk(riskId) {
+            const risk = locoState.risks.find(r => r.id === riskId);
+            if (!risk) return;
+            risk.resolved = true;
+            risk.currentStatus = 'RESOLVED';
+            risk.outcome = 'SUCCESS';
+            risk.updatedAt = new Date().toISOString();
+            addTimelineEvent(`✓ Risk resolved: ${risk.title}`, 'success');
+            addCollabEvent('SYSTEM', `Condition verified. Risk resolved.`, 'RESOLVED', 'success');
+            renderRisks();
+        }
+
+        function escalateRisk(riskId) {
+            const risk = locoState.risks.find(r => r.id === riskId);
+            if (!risk) return;
+            const oldSeverity = risk.severity;
+            risk.severity = 'CRITICAL';
+            risk.currentStatus = 'ESCALATED';
+            risk.escalated = true;
+            risk.outcome = 'ESCALATED';
+            risk.updatedAt = new Date().toISOString();
+            addTimelineEvent(`⚠ RISK ESCALATED: ${oldSeverity} → CRITICAL — ${risk.title}`, 'danger');
+            addCollabEvent('SYSTEM', `Risk escalated: ${oldSeverity} → CRITICAL. Required condition not achieved.`, 'ESCALATED', 'danger');
+            addCollabEvent('CONTROL ROOM', `Emergency notification sent. Follow authorised railway emergency procedure.`, 'NOTIFIED', 'danger');
+            renderRisks();
+            updateSpeedCardSeverity('critical');
+        }
+
+        function prioritizeRisks() {
+            const severityWeight = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+            const statusWeight = { ESCALATED: 100, ACTION_REQUIRED: 50, MONITORING: 30, ACKNOWLEDGED: 20, IN_PROGRESS: 15, DETECTED: 10, RESOLVED: -10, FAILED: 60, DATA_UNAVAILABLE: 40 };
+            locoState.risks.sort((a, b) => {
+                const aw = (severityWeight[a.severity] || 0) * 100 + (statusWeight[a.currentStatus] || 0) + (a.timeToImpact != null ? (900 - Math.min(a.timeToImpact, 900)) : 0) + (a.confidence || 0);
+                const bw = (severityWeight[b.severity] || 0) * 100 + (statusWeight[b.currentStatus] || 0) + (b.timeToImpact != null ? (900 - Math.min(b.timeToImpact, 900)) : 0) + (b.confidence || 0);
+                return bw - aw;
+            });
+        }
+
+        function evaluateSpeedRisk() {
+            const diff = locoState.speed - locoState.targetSpeed;
+            if (diff > 20) {
+                updateSpeedCardSeverity('critical');
+            } else if (diff > 10) {
+                updateSpeedCardSeverity('high');
+            } else if (diff > 0) {
+                updateSpeedCardSeverity('warning');
+            } else {
+                updateSpeedCardSeverity('normal');
+            }
+        }
+
+        // ─────────────────────────────────────────────────
+        //  COLLABORATION ENGINE
+        // ─────────────────────────────────────────────────
+
+        function addCollabEvent(source, message, status, dotType) {
+            locoState.collaborationEvents.push({
+                source,
+                message,
+                status,
+                dotType: dotType || 'info',
+                time: new Date().toLocaleTimeString('en-US', { hour12: false })
+            });
+            renderCollab();
+        }
+
+        function addTimelineEvent(message, type) {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            locoState.timelineEvents.unshift({ time, message, type: type || 'info' });
+            if (locoState.timelineEvents.length > 50) locoState.timelineEvents.pop();
+            renderTimeline();
+        }
+
+        // ─────────────────────────────────────────────────
+        //  RENDERING FUNCTIONS
+        // ─────────────────────────────────────────────────
+
+        function renderRisks() {
+            prioritizeRisks();
+            const panel = document.getElementById('risk-panel');
+            const emptyEl = document.getElementById('risk-empty');
+            const badge = document.getElementById('risk-count-badge');
+            const activeRisks = locoState.risks.filter(r => r.currentStatus !== 'RESOLVED');
+
+            badge.textContent = activeRisks.length;
+            badge.className = `font-mono text-[11px] font-bold ${activeRisks.length > 0 ? (activeRisks.some(r => r.severity === 'CRITICAL') ? 'text-cmd-danger' : 'text-cmd-warning') : 'text-cmd-success'}`;
+
+            if (locoState.risks.length === 0) {
+                if (emptyEl) emptyEl.style.display = '';
+                return;
+            }
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            // Build risk cards HTML
+            let html = '';
+            locoState.risks.forEach(risk => {
+                const sevClass = risk.currentStatus === 'RESOLVED' ? 'risk-resolved' : `risk-${risk.severity.toLowerCase()}`;
+                const sevColor = { CRITICAL: '#ff3333', HIGH: '#ff9933', MEDIUM: '#ffb300', LOW: '#00e5ff' }[risk.severity] || '#4a6580';
+                const statusIcon = {
+                    MONITORING: '●', ACTION_REQUIRED: '⚠', ACKNOWLEDGED: '✓', IN_PROGRESS: '◉',
+                    RESOLVED: '✓', FAILED: '✗', ESCALATED: '⚠', DATA_UNAVAILABLE: '?', DETECTED: '◎'
+                }[risk.currentStatus] || '●';
+                const pulseClass = risk.severity === 'CRITICAL' && risk.currentStatus !== 'RESOLVED' ? 'severity-pulse-critical' : '';
+
+                html += `
+                <div class="risk-card ${sevClass} ${pulseClass} p-3 font-mono text-[11px] loco-fade-in" id="risk-${risk.id}">
+                    <div class="flex justify-between items-start mb-1">
+                        <span style="color:${sevColor}" class="font-bold text-[12px]">${statusIcon} ${risk.severity}</span>
+                        <span class="data-badge badge-ai">AI ASSESSMENT ${risk.confidence}%</span>
+                    </div>
+                    <div class="text-cmd-bright font-bold mb-2">${risk.title}</div>
+                    ${risk.distanceToImpact != null ? `<div class="flex justify-between"><span class="text-gray-500">DISTANCE</span><span class="text-cmd-bright">${risk.distanceToImpact.toFixed(1)} km</span></div>` : ''}
+                    ${risk.timeToImpact != null ? `<div class="flex justify-between"><span class="text-gray-500">ETA</span><span class="text-cmd-bright">${formatTimeToImpact(risk.timeToImpact)}</span></div>` : ''}
+
+                    <div class="mt-2 pt-2 border-t border-gray-800">
+                        <div class="text-gray-500 text-[10px] mb-0.5">WHY</div>
+                        <div class="text-gray-300 text-[10px] mb-2">${risk.why || risk.description}</div>
+                        <div class="text-gray-500 text-[10px] mb-0.5">STATUS</div>
+                        <div class="font-bold mb-2" style="color:${sevColor}">${risk.currentStatus.replace(/_/g, ' ')}</div>
+                        <div class="text-gray-500 text-[10px] mb-0.5">NEXT STEP</div>
+                        <div class="text-gray-300 text-[10px] mb-2">${risk.nextStep}</div>
+                        ${risk.outcome ? `<div class="text-gray-500 text-[10px] mb-0.5">OUTCOME</div><div class="font-bold text-[10px]" style="color:${risk.outcome === 'SUCCESS' ? '#00ff66' : '#ff3333'}">${risk.outcome}</div>` : ''}
+                    </div>
+
+                    ${risk.currentStatus === 'ACTION_REQUIRED' || risk.currentStatus === 'MONITORING' ? `
+                    <div class="mt-2 flex gap-2">
+                        ${!risk.acknowledged ? `<button onclick="acknowledgeRisk('${risk.id}')" class="flex-1 py-1.5 border border-cmd-accent text-cmd-accent hover:bg-cmd-accent hover:text-black transition-colors text-[10px] font-bold tracking-wider">ACKNOWLEDGE</button>` : ''}
+                        <button onclick="toggleRiskDetails('${risk.id}')" class="flex-1 py-1.5 border border-gray-600 text-gray-400 hover:text-white hover:border-white transition-colors text-[10px] tracking-wider">DETAILS</button>
+                    </div>` : ''}
+
+                    <div class="risk-drawer mt-2" id="drawer-${risk.id}">
+                        <div class="border border-gray-800 p-2 bg-black/40 text-[10px] space-y-1">
+                            <div class="text-cmd-accent font-bold mb-1">RISK ANALYSIS</div>
+                            <div class="text-gray-500">CATEGORY: <span class="text-cmd-bright">${risk.category}</span></div>
+                            <div class="text-gray-500">TRIGGER: <span class="text-cmd-bright">${risk.trigger}</span></div>
+                            <div class="text-gray-500">SOURCE: <span class="text-cmd-bright">${risk.source}</span></div>
+                            <div class="text-gray-500 mt-1">DATA SOURCES:</div>
+                            ${(risk.dataSources || []).map(s => `<div class="text-cmd-success">✓ ${s}</div>`).join('')}
+                            <div class="text-gray-500 mt-1">CONFIDENCE: <span class="text-cmd-bright">${risk.confidence}%</span></div>
+                            <div class="text-gray-500">CREATED: <span class="text-cmd-bright">${new Date(risk.createdAt).toLocaleTimeString('en-US', { hour12: false })}</span></div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            // Keep empty element but hide it
+            panel.innerHTML = `<div id="risk-empty" style="display:none" class="text-center font-mono text-[11px] text-gray-600 py-8"><div class="text-2xl mb-2">✓</div>NO ACTIVE RISKS</div>` + html;
+        }
+
+        function toggleRiskDetails(riskId) {
+            const drawer = document.getElementById(`drawer-${riskId}`);
+            if (drawer) drawer.classList.toggle('open');
+        }
+
+        function renderCollab() {
+            const panel = document.getElementById('collab-panel');
+            const emptyEl = document.getElementById('collab-empty');
+            if (locoState.collaborationEvents.length === 0) {
+                if (emptyEl) emptyEl.style.display = '';
+                return;
+            }
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            let html = '';
+            locoState.collaborationEvents.forEach(evt => {
+                html += `
+                <div class="collab-event font-mono text-[11px] pb-2 loco-fade-in">
+                    <div class="collab-dot dot-${evt.dotType}"></div>
+                    <div class="flex justify-between items-start">
+                        <span class="text-cmd-accent font-bold">${evt.source}</span>
+                        <span class="text-gray-600 text-[10px]">${evt.time}</span>
+                    </div>
+                    <div class="text-gray-300 mt-0.5">${evt.message}</div>
+                    <div class="mt-0.5"><span class="text-gray-500 text-[10px]">STATUS</span> <span class="font-bold text-[10px]" style="color:${evt.dotType === 'success' ? '#00ff66' : evt.dotType === 'danger' ? '#ff3333' : evt.dotType === 'warning' ? '#ffb300' : '#00e5ff'}">${evt.status}</span></div>
+                </div>`;
+            });
+            panel.innerHTML = html;
+            panel.scrollTop = panel.scrollHeight;
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('event-timeline');
+            const colorMap = { success: '#00ff66', danger: '#ff3333', warning: '#ffb300', info: '#00e5ff', default: '#4a6580' };
+            let html = '';
+            locoState.timelineEvents.forEach(evt => {
+                const c = colorMap[evt.type] || colorMap.default;
+                html += `
+                <div class="timeline-event font-mono text-[10px]">
+                    <div class="timeline-dot" style="background:${c}; box-shadow: 0 0 3px ${c};"></div>
+                    <span class="text-gray-600">${evt.time}</span>
+                    <span class="text-gray-300 ml-2">${evt.message}</span>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderUpcomingEvents() {
+            const container = document.getElementById('upcoming-events');
+            const currentDist = locoState.location.distFromStart;
+            const aheadEvents = [];
+
+            // Add route events ahead
+            ROUTE_EVENTS.forEach(evt => {
+                const dist = evt.distFromStart - currentDist;
+                if (dist > 0 && dist < 80) {
+                    const eta = Math.round((dist / locoState.speed) * 60);
+                    const etaTime = new Date(Date.now() + eta * 60000);
+                    aheadEvents.push({
+                        ...evt,
+                        distAhead: dist,
+                        etaMin: eta,
+                        etaTime: etaTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+                    });
+                }
+            });
+
+            // Add next station approach
+            const nextStn = ROUTE_STATIONS.find(s => s.dist > currentDist);
+            if (nextStn) {
+                const dist = nextStn.dist - currentDist;
+                if (dist < 80) {
+                    const eta = Math.round((dist / locoState.speed) * 60);
+                    const etaTime = new Date(Date.now() + eta * 60000);
+                    aheadEvents.push({
+                        type: 'STATION',
+                        name: nextStn.name,
+                        distAhead: dist,
+                        etaMin: eta,
+                        etaTime: etaTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+                    });
+                }
+            }
+
+            aheadEvents.sort((a, b) => a.distAhead - b.distAhead);
+
+            if (aheadEvents.length === 0) {
+                container.innerHTML = '<div class="text-center font-mono text-[11px] text-gray-600 py-4 w-full">NO UPCOMING EVENTS IN RANGE</div>';
+                return;
+            }
+
+            let html = '';
+            aheadEvents.forEach(evt => {
+                const typeIcon = { SPEED_RESTRICTION: '⚠', LEVEL_CROSSING: '✕', BRIDGE: '▬', TUNNEL: '◯', STATION: '■', MAINTENANCE: '⚙' }[evt.type] || '●';
+                const typeColor = { SPEED_RESTRICTION: '#ff9933', LEVEL_CROSSING: '#ffb300', BRIDGE: '#00e5ff', TUNNEL: '#8ba8c8', STATION: '#00e5ff', MAINTENANCE: '#ffb300' }[evt.type] || '#4a6580';
+                const typeName = evt.type.replace(/_/g, ' ');
+
+                html += `
+                <div class="upcoming-card bg-black/30 p-3 min-w-[200px] shrink-0 font-mono text-[11px]">
+                    <div class="text-gray-600 text-[10px]">${evt.etaTime}</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span style="color:${typeColor}" class="text-sm">${typeIcon}</span>
+                        <span class="font-bold" style="color:${typeColor}">${typeName}</span>
+                    </div>
+                    <div class="text-cmd-bright mt-1">${evt.name || ''}${evt.limit ? ` ${evt.limit} km/h` : ''}</div>
+                    <div class="text-gray-500 mt-1">${evt.distAhead.toFixed(1)} km ahead · ETA ${evt.etaMin}m</div>
+                    ${evt.reason ? `<div class="text-gray-600 text-[10px] mt-1">${evt.reason}</div>` : ''}
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // ─────────────────────────────────────────────────
+        //  UI UPDATE
+        // ─────────────────────────────────────────────────
+
+        function updateLocoUI() {
+            // Speed
+            document.getElementById('val-speed').textContent = Math.round(locoState.speed);
+            document.getElementById('val-permitted').textContent = locoState.permittedSpeed;
+            document.getElementById('val-target').textContent = locoState.targetSpeed;
+
+            const diff = locoState.speed - locoState.permittedSpeed;
+            const diffEl = document.getElementById('val-diff');
+            diffEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(0)} km/h`;
+            diffEl.className = diff > 0 ? 'text-cmd-danger' : diff > -10 ? 'text-cmd-warning' : 'text-cmd-success';
+
+            document.getElementById('val-accel').textContent = `${locoState.acceleration >= 0 ? '+' : ''}${locoState.acceleration.toFixed(2)} m/s²`;
+
+            // Speed bar
+            const pct = Math.min((locoState.speed / locoState.permittedSpeed) * 100, 150);
+            const bar = document.getElementById('speed-bar');
+            bar.style.width = Math.min(pct, 100) + '%';
+            bar.style.background = pct > 100 ? '#ff3333' : pct > 85 ? '#ffb300' : '#00ff66';
+
+            // Target marker on speed bar
+            if (locoState.targetSpeed < locoState.permittedSpeed) {
+                const tPct = (locoState.targetSpeed / locoState.permittedSpeed) * 100;
+                document.getElementById('speed-limit-marker').style.left = tPct + '%';
+                document.getElementById('speed-limit-marker').style.display = '';
+            } else {
+                document.getElementById('speed-limit-marker').style.display = 'none';
+            }
+
+            // Brake & throttle
+            document.getElementById('val-brake').textContent = locoState.brakeStatus;
+            document.getElementById('val-brake').className = locoState.brakeStatus === 'RELEASED' ? 'text-cmd-success font-bold' : 'text-cmd-warning font-bold';
+            document.getElementById('val-throttle').textContent = locoState.throttleStatus;
+
+            // Route
+            document.getElementById('val-current-stn').textContent = getCurrentStationName();
+            document.getElementById('val-next-stn').textContent = locoState.nextStation;
+            document.getElementById('val-distance').textContent = `${locoState.distanceToNextStation.toFixed(1)} KM`;
+
+            const etaMin = Math.round((locoState.distanceToNextStation / Math.max(locoState.speed, 1)) * 60);
+            const etaTime = new Date(Date.now() + etaMin * 60000);
+            locoState.eta = etaTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            document.getElementById('val-eta').textContent = locoState.eta;
+
+            // Signal
+            const sigEl = document.getElementById('val-signal');
+            const sigColors = { GREEN: '#00ff66', YELLOW: '#ffb300', RED: '#ff3333', DOUBLE_YELLOW: '#ffb300' };
+            sigEl.innerHTML = `<span style="color:${sigColors[locoState.signal.state] || '#4a6580'}">● ${locoState.signal.state}</span>`;
+            document.getElementById('val-sig-dist').textContent = `${locoState.signal.distance.toFixed(1)} KM`;
+
+            // Weather
+            document.getElementById('val-weather').textContent = locoState.weather.condition;
+            document.getElementById('val-visibility').textContent = `${locoState.weather.visibility} m`;
+            document.getElementById('val-rainfall').textContent = locoState.weather.rainfall;
+
+            // Section header
+            document.getElementById('hdr-section').textContent = locoState.location.section;
+
+            // Data age
+            const age = ((Date.now() - locoState.lastUpdate) / 1000).toFixed(1);
+            const ageEl = document.getElementById('hdr-data-age');
+            const dataTextEl = document.getElementById('hdr-data-text');
+            if (age > 10) {
+                ageEl.textContent = `${age}s — STALE`;
+                ageEl.className = 'text-cmd-danger text-[10px] font-bold';
+                dataTextEl.textContent = '⚠ STALE';
+                dataTextEl.className = 'text-cmd-danger font-bold';
+            } else {
+                ageEl.textContent = `${age}s ago`;
+                ageEl.className = 'text-gray-500 text-[10px]';
+                dataTextEl.textContent = 'SIMULATED';
+                dataTextEl.className = 'text-[#00e5ff]';
+            }
+
+            // Upcoming events
+            renderUpcomingEvents();
+
+            // Station approach mode
+            checkStationApproach();
+
+            // Live changes
+            updateLiveChanges();
+        }
+
+        function updateSpeedCardSeverity(level) {
+            const card = document.getElementById('speed-card');
+            card.className = card.className.replace(/severity-\w+/g, '');
+            card.classList.add(`severity-${level}`);
+        }
+
+        function getCurrentStationName() {
+            const current = locoState.location.distFromStart;
+            let lastPassed = ROUTE_STATIONS[0];
+            for (let i = 0; i < ROUTE_STATIONS.length; i++) {
+                if (ROUTE_STATIONS[i].dist <= current) {
+                    lastPassed = ROUTE_STATIONS[i];
+                } else {
+                    break;
+                }
+            }
+            return lastPassed.name;
+        }
+
+        function formatTimeToImpact(seconds) {
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            const m = Math.floor(seconds / 60);
+            const s = Math.round(seconds % 60);
+            return `${m}m ${s}s`;
+        }
+
+        function updateLiveChanges() {
+            // Speed change indicator
+            const speedEl = document.getElementById('chg-speed');
+            if (locoState.acceleration > 0.05) {
+                speedEl.innerHTML = `<span class="change-up">↑ ${Math.round(locoState.speed)} km/h</span>`;
+            } else if (locoState.acceleration < -0.05) {
+                speedEl.innerHTML = `<span class="change-down">↓ ${Math.round(locoState.speed)} km/h</span>`;
+            } else {
+                speedEl.innerHTML = `<span class="change-stable">→ ${Math.round(locoState.speed)} km/h</span>`;
+            }
+        }
+
+        function checkStationApproach() {
+            const panel = document.getElementById('station-approach-panel');
+            const nextStn = ROUTE_STATIONS.find(s => s.dist > locoState.location.distFromStart);
+            if (nextStn) {
+                const dist = nextStn.dist - locoState.location.distFromStart;
+                if (dist < 10) {
+                    panel.classList.remove('hidden');
+                    document.getElementById('sa-station').textContent = nextStn.name;
+                    document.getElementById('sa-distance').textContent = `${dist.toFixed(1)} KM`;
+                    document.getElementById('sa-platform').textContent = nextStn.platform;
+                    document.getElementById('sa-crowd').textContent = `${Math.floor(40 + Math.random() * 40)}%`;
+                    document.getElementById('sa-trains').textContent = Math.floor(2 + Math.random() * 4);
+                } else {
+                    panel.classList.add('hidden');
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────────────
+        //  MAP INITIALIZATION (Pilot Focused)
+        // ─────────────────────────────────────────────────
+
+        function initLocoPilotMap() {
+            if (mapInitialized) return;
+            mapInitialized = true;
+
+            locoMap = L.map('loco-map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([locoState.location.lat, locoState.location.lng], 10);
+
+            L.control.zoom({ position: 'topright' }).addTo(locoMap);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                opacity: 0.8
+            }).addTo(locoMap);
+
+            // OpenRailwayMap overlay
+            L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                opacity: 0.6
+            }).addTo(locoMap);
+
+            // Draw route line
+            const routeCoords = ROUTE_STATIONS.map(s => [s.lat, s.lng]);
+            routeLine = L.polyline(routeCoords, {
+                color: '#00e5ff',
+                weight: 3,
+                opacity: 0.6,
+                dashArray: '8, 4'
+            }).addTo(locoMap);
+
+            // Station markers
+            ROUTE_STATIONS.forEach(stn => {
+                const marker = L.circleMarker([stn.lat, stn.lng], {
+                    radius: 6,
+                    fillColor: '#00e5ff',
+                    color: '#041024',
+                    weight: 2,
+                    fillOpacity: 0.8
+                }).addTo(locoMap);
+                marker.bindTooltip(`<div style="font-family:'Share Tech Mono'; text-transform:uppercase; font-size:11px;">${stn.name}<br><span style="color:#888; font-size:10px;">${stn.id} — PF ${stn.platform}</span></div>`, {
+                    direction: 'top',
+                    className: '',
+                    permanent: false
+                });
+            });
+
+            // Route events (restrictions, crossings, etc.)
+            ROUTE_EVENTS.forEach(evt => {
+                const pos = getPositionAlongRoute(evt.distFromStart);
+                if (!pos) return;
+                const colors = { SPEED_RESTRICTION: '#ff9933', LEVEL_CROSSING: '#ffb300', BRIDGE: '#00e5ff', TUNNEL: '#8ba8c8' };
+                const icons = { SPEED_RESTRICTION: '⚠', LEVEL_CROSSING: '✕', BRIDGE: '▬', TUNNEL: '◯' };
+                const c = colors[evt.type] || '#4a6580';
+                L.circleMarker(pos, {
+                    radius: 4,
+                    fillColor: c,
+                    color: c,
+                    weight: 1,
+                    fillOpacity: 0.6
+                }).addTo(locoMap).bindTooltip(
+                    `<div style="font-family:'Share Tech Mono'; text-transform:uppercase; font-size:10px; color:${c};">${icons[evt.type] || '●'} ${evt.type.replace(/_/g, ' ')}<br>${evt.name || ''}${evt.limit ? ` ${evt.limit} km/h` : ''}</div>`,
+                    { direction: 'top' }
+                );
+            });
+
+            // Train marker (diamond shape)
+            const trainIcon = L.divIcon({
+                html: `<div style="transform: rotate(45deg);">
+                    <div style="width: 14px; height: 14px; background: #ffb300; border: 2px solid #fff; box-shadow: 0 0 10px #ffb300;"></div>
+                </div>`,
+                className: '',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+            trainMarker = L.marker([locoState.location.lat, locoState.location.lng], { icon: trainIcon }).addTo(locoMap);
+            trainMarker.bindTooltip(
+                `<div style="font-family:'Share Tech Mono'; text-transform:uppercase; font-size:11px; color:#ffb300;">TRN ${locoState.trainNumber}<br>${locoState.trainName}<br><span style="color:#00ff66">${Math.round(locoState.speed)} km/h</span></div>`,
+                { direction: 'top', permanent: true, className: '' }
+            );
+
+            // HUD update
+            locoMap.on('move', () => {
+                const center = locoMap.getCenter();
+                document.getElementById('hud-lat').textContent = center.lat.toFixed(4);
+                document.getElementById('hud-lng').textContent = center.lng.toFixed(4);
+                document.getElementById('hud-zoom').textContent = locoMap.getZoom();
+            });
+            locoMap.fire('move');
+        }
+
+        function getPositionAlongRoute(distFromStart) {
+            for (let i = 0; i < ROUTE_STATIONS.length - 1; i++) {
+                const a = ROUTE_STATIONS[i];
+                const b = ROUTE_STATIONS[i + 1];
+                if (distFromStart >= a.dist && distFromStart <= b.dist) {
+                    const t = (distFromStart - a.dist) / (b.dist - a.dist);
+                    return [a.lat + (b.lat - a.lat) * t, a.lng + (b.lng - a.lng) * t];
+                }
+            }
+            return null;
+        }
+
+        function updateMapPosition() {
+            if (!locoMap || !trainMarker) return;
+            const pos = getPositionAlongRoute(locoState.location.distFromStart);
+            if (pos) {
+                locoState.location.lat = pos[0];
+                locoState.location.lng = pos[1];
+                trainMarker.setLatLng(pos);
+                trainMarker.setTooltipContent(
+                    `<div style="font-family:'Share Tech Mono'; text-transform:uppercase; font-size:11px; color:#ffb300;">TRN ${locoState.trainNumber}<br>${locoState.trainName}<br><span style="color:#00ff66">${Math.round(locoState.speed)} km/h</span></div>`
+                );
+                locoMap.panTo(pos, { animate: true, duration: 0.5 });
+            }
+        }
+
+        // ─────────────────────────────────────────────────
+        //  SIMULATION SCENARIOS
+        // ─────────────────────────────────────────────────
+
+        function startScenario(num) {
+            // Clean up
+            if (simInterval) clearInterval(simInterval);
+            resetState();
+            currentScenario = num;
+            simStep = 0;
+            simRunning = true;
+
+            // Update UI buttons
+            document.querySelectorAll('.sim-scenario-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`scn-${num}`).classList.add('active');
+
+            addTimelineEvent(`Scenario ${num} started`, 'info');
+            addCollabEvent('SYSTEM', `Simulation scenario ${num} initiated.`, 'ACTIVE', 'info');
+
+            switch (num) {
+                case 1: runScenarioNormal(); break;
+                case 2: runScenarioSpeedRestriction(); break;
+                case 3: runScenarioWeather(); break;
+                case 4: runScenarioTrackHazard(); break;
+                case 5: runScenarioFailedResponse(); break;
+            }
+        }
+
+        function resetState() {
+            if (simInterval) clearInterval(simInterval);
+            simRunning = false;
+            locoState.speed = 108;
+            locoState.permittedSpeed = 120;
+            locoState.targetSpeed = 120;
+            locoState.acceleration = 0.18;
+            locoState.location.distFromStart = 145;
+            locoState.signal = { state: 'GREEN', distance: 3.2 };
+            locoState.brakeStatus = 'RELEASED';
+            locoState.throttleStatus = 'NOTCH 4';
+            locoState.weather = { condition: 'PARTLY CLOUDY', visibility: 2400, rainfall: 'NONE', temperature: 32 };
+            locoState.track = { condition: 'NORMAL', restriction: null, restrictionDistance: null };
+            locoState.risks = [];
+            locoState.collaborationEvents = [];
+            locoState.timelineEvents = [];
+            riskIdCounter = 0;
+            updateSpeedCardSeverity('normal');
+            updateLocoUI();
+            renderRisks();
+            renderCollab();
+            renderTimeline();
+        }
+
+        function resetSimulation() {
+            resetState();
+            addTimelineEvent('System reset', 'info');
+            document.querySelectorAll('.sim-scenario-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('scn-1').classList.add('active');
+            currentScenario = 1;
+        }
+
+        // ── SCENARIO 1: Normal ──
+        function runScenarioNormal() {
+            addTimelineEvent('Departed BHUBANESWAR — nominal operations', 'success');
+            addCollabEvent('SYSTEM', 'All systems nominal. No active risks.', 'NORMAL', 'success');
+
+            simInterval = setInterval(() => {
+                simStep++;
+                locoState.location.distFromStart += 0.3;
+                locoState.speed = 108 + Math.sin(simStep * 0.1) * 3;
+                locoState.acceleration = Math.cos(simStep * 0.1) * 0.05;
+                locoState.signal.distance = Math.max(0.5, locoState.signal.distance - 0.1 + Math.random() * 0.2);
+                locoState.lastUpdate = Date.now();
+                locoState.timestamp = Date.now();
+                updateNextStation();
+                updateLocoUI();
+                evaluateSpeedRisk();
+                updateMapPosition();
+            }, 1000);
+        }
+
+        // ── SCENARIO 2: Speed Restriction (Polished Demo) ──
+        function runScenarioSpeedRestriction() {
+            let restrictionDetected = false;
+            let restrictionRisk = null;
+
+            addTimelineEvent('Departed BHUBANESWAR — normal operations', 'success');
+
+            simInterval = setInterval(() => {
+                simStep++;
+                locoState.lastUpdate = Date.now();
+                locoState.timestamp = Date.now();
+
+                // Phase 1: Normal travel (steps 1-5)
+                if (simStep <= 5) {
+                    locoState.location.distFromStart += 0.5;
+                    locoState.speed = 108 + Math.random() * 2;
+                    locoState.acceleration = 0.1;
+                    updateNextStation();
+                    updateLocoUI();
+                    evaluateSpeedRisk();
+                    updateMapPosition();
+                }
+
+                // Phase 2: Restriction detected (step 6)
+                if (simStep === 6 && !restrictionDetected) {
+                    restrictionDetected = true;
+                    locoState.targetSpeed = 80;
+                    locoState.track.restriction = 80;
+                    locoState.track.restrictionDistance = 8.4;
+
+                    restrictionRisk = createRisk({
+                        category: 'SPEED',
+                        severity: 'HIGH',
+                        title: 'UPCOMING SPEED RESTRICTION',
+                        description: `Current ${Math.round(locoState.speed)} km/h → Upcoming limit 80 km/h`,
+                        trigger: 'Temporary speed restriction detected ahead',
+                        confidence: 94,
+                        distanceToImpact: 8.4,
+                        timeToImpact: 94,
+                        nextStep: 'Prepare for upcoming restriction according to authorised railway procedure.',
+                        source: 'ROUTE DATA + RISK ENGINE',
+                        why: `Upcoming temporary speed restriction of 80 km/h detected 8.4 km ahead. Current speed is ${Math.round(locoState.speed)} km/h. Speed reduction of ${Math.round(locoState.speed) - 80} km/h required within estimated 1m 34s.`,
+                        dataSources: ['Train telemetry', 'Route data', 'Track restriction data']
+                    });
+                    updateRiskStatus(restrictionRisk.id, 'ACTION_REQUIRED');
+                    addCollabEvent('CONTROL ROOM', `Temporary speed restriction detected.\nSection: BBS → VSKP\nRestriction: 75 km/h`, 'NOTIFIED', 'warning');
+                    updateSpeedCardSeverity('high');
+                }
+
+                // Phase 3: Approaching (steps 7-12)
+                if (simStep > 6 && simStep <= 12) {
+                    locoState.location.distFromStart += 0.4;
+                    if (restrictionRisk && locoState.track.restrictionDistance > 0) {
+                        locoState.track.restrictionDistance -= 0.4;
+                        restrictionRisk.distanceToImpact = Math.max(0, locoState.track.restrictionDistance);
+                        restrictionRisk.timeToImpact = Math.max(0, (locoState.track.restrictionDistance / locoState.speed) * 3600);
+                    }
+                    // Gradually slow down
+                    locoState.speed = Math.max(78, locoState.speed - 5);
+                    locoState.acceleration = -0.35;
+                    locoState.brakeStatus = 'SERVICE';
+                    locoState.throttleStatus = 'IDLE';
+                    updateNextStation();
+                    updateLocoUI();
+                    evaluateSpeedRisk();
+                    updateMapPosition();
+                    renderRisks();
+                }
+
+                // Phase 4: Speed achieved, monitor (step 10)
+                if (simStep === 10 && restrictionRisk) {
+                    if (restrictionRisk.acknowledged === false) {
+                        // Auto-acknowledge for demo
+                        acknowledgeRisk(restrictionRisk.id);
+                    }
+                    updateRiskStatus(restrictionRisk.id, 'IN_PROGRESS');
+                    addCollabEvent('SYSTEM', 'Train approaching affected section.', 'MONITORING', 'monitoring');
+                }
+
+                // Phase 5: Resolved (step 13)
+                if (simStep === 13 && restrictionRisk) {
+                    locoState.speed = 79;
+                    locoState.acceleration = 0;
+                    locoState.brakeStatus = 'RELEASED';
+                    resolveRisk(restrictionRisk.id);
+                    updateSpeedCardSeverity('normal');
+                    addTimelineEvent('✓ Speed restriction complied — section cleared', 'success');
+                    addCollabEvent('CONTROL ROOM', 'Speed restriction compliance verified. Section cleared.', 'UPDATED', 'success');
+                    updateLocoUI();
+                    renderRisks();
+                }
+
+                // Phase 6: Resume normal (step 14+)
+                if (simStep > 13) {
+                    locoState.location.distFromStart += 0.3;
+                    locoState.speed = Math.min(120, locoState.speed + 2);
+                    locoState.acceleration = 0.15;
+                    locoState.targetSpeed = 120;
+                    locoState.throttleStatus = 'NOTCH 4';
+                    updateNextStation();
+                    updateLocoUI();
+                    evaluateSpeedRisk();
+                    updateMapPosition();
+                }
+
+                if (simStep >= 18) {
+                    clearInterval(simInterval);
+                    simRunning = false;
+                    addTimelineEvent('Scenario complete — all risks resolved', 'success');
+                }
+            }, 2000);
+        }
+
+        // ── SCENARIO 3: Weather ──
+        function runScenarioWeather() {
+            addTimelineEvent('Departed — monitoring weather conditions', 'info');
+
+            simInterval = setInterval(() => {
+                simStep++;
+                locoState.lastUpdate = Date.now();
+                locoState.location.distFromStart += 0.3;
+                locoState.speed = 108 + Math.sin(simStep * 0.2) * 3;
+                locoState.acceleration = Math.cos(simStep * 0.2) * 0.05;
+                updateNextStation();
+                updateMapPosition();
+
+                // Step 4: Visibility starts dropping
+                if (simStep === 4) {
+                    locoState.weather.visibility = 1200;
+                    locoState.weather.condition = 'HAZE';
+                    addTimelineEvent('ℹ Weather visibility changed — 1200m', 'info');
+                    document.getElementById('chg-visibility').innerHTML = '<span class="change-down">↓ 2400m → 1200m</span>';
+                }
+
+                // Step 6: Create weather risk
+                if (simStep === 6) {
+                    locoState.weather.visibility = 620;
+                    locoState.weather.condition = 'DENSE FOG';
+                    createRisk({
+                        category: 'WEATHER',
+                        severity: 'MEDIUM',
+                        title: 'LOW VISIBILITY AHEAD',
+                        description: 'Visibility has decreased significantly.',
+                        trigger: 'Visibility dropped below 800m threshold',
+                        confidence: 88,
+                        distanceToImpact: 7.4,
+                        nextStep: 'Reduce speed per visibility protocol. Monitor conditions.',
+                        source: 'WEATHER DATA + RISK ENGINE',
+                        why: `Visibility has dropped to 620m, below the 800m operational threshold. Trend: DECREASING. Dense fog conditions detected ahead at 7.4 km.`,
+                        dataSources: ['Weather feed', 'Visibility sensor', 'Route data']
+                    });
+                    addCollabEvent('CONTROL ROOM', 'Low visibility alert issued for section.', 'NOTIFIED', 'warning');
+                    document.getElementById('chg-visibility').innerHTML = '<span class="change-down">↓ 1200m → 620m</span>';
+                }
+
+                // Step 8: Further deterioration
+                if (simStep === 8) {
+                    locoState.weather.visibility = 480;
+                    locoState.speed = 85;
+                    locoState.brakeStatus = 'SERVICE';
+                    addTimelineEvent('↓ Visibility decreased to 480m', 'warning');
+                    document.getElementById('chg-visibility').innerHTML = '<span class="change-down">↓ 620m → 480m</span>';
+                }
+
+                // Step 12: Stabilize
+                if (simStep === 12) {
+                    locoState.weather.visibility = 500;
+                    locoState.weather.condition = 'FOG';
+                    addTimelineEvent('Visibility stabilized at 500m — monitoring', 'info');
+                    addCollabEvent('SYSTEM', 'Visibility stabilized. Continuing to monitor.', 'MONITORING', 'monitoring');
+                }
+
+                updateLocoUI();
+                evaluateSpeedRisk();
+
+                if (simStep >= 16) {
+                    clearInterval(simInterval);
+                    simRunning = false;
+                    addTimelineEvent('Scenario complete', 'info');
+                }
+            }, 2000);
+        }
+
+        // ── SCENARIO 4: Track Hazard ──
+        function runScenarioTrackHazard() {
+            let hazardRisk = null;
+            addTimelineEvent('Departed — routine operations', 'success');
+
+            simInterval = setInterval(() => {
+                simStep++;
+                locoState.lastUpdate = Date.now();
+                locoState.location.distFromStart += 0.3;
+                locoState.speed = 108 + Math.random() * 2;
+                updateNextStation();
+                updateMapPosition();
+
+                // Step 4: Track warning
+                if (simStep === 4) {
+                    hazardRisk = createRisk({
+                        category: 'TRACK',
+                        severity: 'HIGH',
+                        title: 'TRACK MAINTENANCE ZONE',
+                        description: 'Active track maintenance work zone ahead.',
+                        trigger: 'Track maintenance notification from Control Room',
+                        confidence: 92,
+                        distanceToImpact: 6.2,
+                        timeToImpact: 210,
+                        nextStep: 'Reduce speed and prepare for temporary restriction according to authorised procedure.',
+                        source: 'CONTROL ROOM + TRACK DATA',
+                        why: 'Control Room reported active track maintenance in section BBS → VSKP at km 310. Temporary speed restriction of 40 km/h applies. Work crew on site.',
+                        dataSources: ['Control Room notification', 'Track maintenance schedule', 'Route data']
+                    });
+                    updateRiskStatus(hazardRisk.id, 'ACTION_REQUIRED');
+                    addCollabEvent('CONTROL ROOM', 'Track maintenance zone detected ahead.\nSection: BBS → VSKP km 310\nRestriction: 40 km/h\nWork crew on site.', 'NOTIFIED', 'warning');
+                    locoState.targetSpeed = 40;
+                    locoState.track.restriction = 40;
+                    updateSpeedCardSeverity('high');
+                }
+
+                // Step 6: Pilot acknowledges
+                if (simStep === 6 && hazardRisk) {
+                    acknowledgeRisk(hazardRisk.id);
+                    locoState.speed = 80;
+                    locoState.brakeStatus = 'SERVICE';
+                    locoState.throttleStatus = 'IDLE';
+                }
+
+                // Step 8: Approaching
+                if (simStep === 8 && hazardRisk) {
+                    locoState.speed = 45;
+                    updateRiskStatus(hazardRisk.id, 'IN_PROGRESS');
+                    addCollabEvent('SYSTEM', 'Train approaching maintenance zone. Speed reduced.', 'MONITORING', 'monitoring');
+                    if (hazardRisk) {
+                        hazardRisk.distanceToImpact = 1.2;
+                        hazardRisk.timeToImpact = 45;
+                    }
+                }
+
+                // Step 11: Through the zone
+                if (simStep === 11 && hazardRisk) {
+                    locoState.speed = 38;
+                    addTimelineEvent('Passing through maintenance zone at 38 km/h', 'info');
+                }
+
+                // Step 13: Cleared
+                if (simStep === 13 && hazardRisk) {
+                    resolveRisk(hazardRisk.id);
+                    locoState.targetSpeed = 120;
+                    locoState.track.restriction = null;
+                    locoState.brakeStatus = 'RELEASED';
+                    locoState.throttleStatus = 'NOTCH 4';
+                    updateSpeedCardSeverity('normal');
+                    addCollabEvent('CONTROL ROOM', 'Track maintenance zone cleared. Resume normal operations.', 'CLEARED', 'success');
+                }
+
+                // Step 14+: Resume
+                if (simStep > 13) {
+                    locoState.speed = Math.min(120, locoState.speed + 5);
+                    locoState.acceleration = 0.2;
+                }
+
+                updateLocoUI();
+                evaluateSpeedRisk();
+                renderRisks();
+
+                if (simStep >= 17) {
+                    clearInterval(simInterval);
+                    simRunning = false;
+                    addTimelineEvent('Scenario complete — maintenance zone cleared', 'success');
+                }
+            }, 2000);
+        }
+
+        // ── SCENARIO 5: Failed Response ──
+        function runScenarioFailedResponse() {
+            let failRisk = null;
+            addTimelineEvent('Departed — monitoring conditions', 'info');
+
+            simInterval = setInterval(() => {
+                simStep++;
+                locoState.lastUpdate = Date.now();
+                locoState.location.distFromStart += 0.4;
+                updateNextStation();
+                updateMapPosition();
+
+                // Step 3: Risk detected
+                if (simStep === 3) {
+                    locoState.targetSpeed = 80;
+                    failRisk = createRisk({
+                        category: 'SPEED',
+                        severity: 'HIGH',
+                        title: 'SPEED RESTRICTION APPROACHING',
+                        description: 'Upcoming speed restriction requires action.',
+                        trigger: 'Speed restriction detected — no reduction observed',
+                        confidence: 94,
+                        distanceToImpact: 5.0,
+                        timeToImpact: 170,
+                        nextStep: 'Reduce speed according to authorised railway procedure.',
+                        source: 'RISK ENGINE',
+                        why: `Speed restriction of 80 km/h detected 5.0 km ahead. Current speed 110 km/h. Speed reduction required.`,
+                        dataSources: ['Train telemetry', 'Route data', 'Track restriction data']
+                    });
+                    updateRiskStatus(failRisk.id, 'ACTION_REQUIRED');
+                    addCollabEvent('CONTROL ROOM', 'Speed restriction ahead. Pilot notification sent.', 'NOTIFIED', 'warning');
+                    updateSpeedCardSeverity('high');
+                }
+
+                // Steps 4-7: NO resolution — speed stays high
+                if (simStep >= 4 && simStep <= 7) {
+                    locoState.speed = 110 + Math.random() * 3;
+                    locoState.acceleration = 0.05;
+                    if (failRisk) {
+                        failRisk.distanceToImpact = Math.max(0.5, failRisk.distanceToImpact - 0.8);
+                        failRisk.timeToImpact = Math.max(10, failRisk.timeToImpact - 34);
+                    }
+                    renderRisks();
+                }
+
+                // Step 7: No response detected
+                if (simStep === 7 && failRisk) {
+                    addTimelineEvent('⚠ No speed reduction detected — condition persists', 'warning');
+                    addCollabEvent('SYSTEM', 'No speed reduction observed. Risk condition persists.', 'NOT RESOLVED', 'danger');
+                    failRisk.currentStatus = 'FAILED';
+                    failRisk.description = 'Required speed reduction not achieved. Condition persists.';
+                    renderRisks();
+                }
+
+                // Step 9: ESCALATION
+                if (simStep === 9 && failRisk) {
+                    escalateRisk(failRisk.id);
+                    locoState.speed = 112;
+                    failRisk.nextStep = 'Follow authorised railway emergency/operational procedure. Contact Control Room immediately.';
+                    failRisk.description = `RISK NOT RESOLVED\n\nPrevious status: ACTION REQUIRED\nCurrent: CONDITION PERSISTS\nRisk: HIGH → CRITICAL\n\nRequired speed reduction not achieved.`;
+                    renderRisks();
+                }
+
+                // Steps 10+: Show escalated state
+                if (simStep >= 10) {
+                    locoState.speed = Math.max(75, locoState.speed - 8);
+                    locoState.brakeStatus = 'EMERGENCY';
+                    locoState.throttleStatus = 'SHUTDOWN';
+                    locoState.acceleration = -0.8;
+                }
+
+                updateLocoUI();
+                evaluateSpeedRisk();
+
+                if (simStep >= 14) {
+                    clearInterval(simInterval);
+                    simRunning = false;
+                    addTimelineEvent('Scenario complete — escalation demonstrated', 'danger');
+                }
+            }, 2000);
+        }
+
+        // ── Simulate Failure Button ──
+        function simulateFailure() {
+            startScenario(5);
+        }
+
+        // ── Utility: Update next station ──
+        function updateNextStation() {
+            const current = locoState.location.distFromStart;
+            for (let i = 0; i < ROUTE_STATIONS.length; i++) {
+                if (ROUTE_STATIONS[i].dist > current) {
+                    locoState.nextStation = ROUTE_STATIONS[i].name;
+                    locoState.nextStationId = ROUTE_STATIONS[i].id;
+                    locoState.distanceToNextStation = ROUTE_STATIONS[i].dist - current;
+
+                    // Update section name
+                    if (i > 0) {
+                        locoState.location.section = `${ROUTE_STATIONS[i - 1].id} → ${ROUTE_STATIONS[i].id}`;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────────────
+        //  SYSTEM HEALTH (Simulated monitoring)
+        // ─────────────────────────────────────────────────
+
+        function updateSystemHealth() {
+            const healthEl = document.getElementById('system-health');
+            const items = Object.entries(locoState.systemHealth);
+            let html = '';
+            items.forEach(([key, status]) => {
+                const label = key.replace(/([A-Z])/g, ' $1').toUpperCase().trim();
+                const dotClass = status === 'ONLINE' ? 'online' : status === 'STALE' ? 'stale' : 'offline';
+                const textClass = status === 'ONLINE' ? 'text-cmd-success' : status === 'STALE' ? 'text-cmd-warning' : 'text-cmd-danger';
+                html += `<div class="health-item"><div class="health-dot ${dotClass}"></div><span class="text-gray-400">${label}</span><span class="ml-auto ${textClass} text-[10px]">${status}</span></div>`;
+            });
+            healthEl.innerHTML = html;
+        }
+
+        // ─────────────────────────────────────────────────
+        //  INITIALIZATION
+        // ─────────────────────────────────────────────────
+
+        // Clock
+        setInterval(() => {
+            document.getElementById('hdr-clock').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+        }, 1000);
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+
+            // Initialize map
+            setTimeout(() => initLocoPilotMap(), 200);
+
+            // Initial state
+            updateNextStation();
+            updateLocoUI();
+            updateSystemHealth();
+            addTimelineEvent('System initialized — SIMULATION MODE', 'info');
+            addTimelineEvent('Risk engine online', 'success');
+            addTimelineEvent('All subsystems nominal', 'success');
+            addCollabEvent('SYSTEM', 'Loco Pilot panel initialized. All systems operational.', 'ONLINE', 'success');
+
+            // Start default scenario
+            startScenario(1);
+        });
+
+    
+        // ─────────────────────────────────────────────────
+        //  RAILRADAR LIVE INTEGRATION SERVICE
+        // ─────────────────────────────────────────────────
+        window.RailRadarService = (function() {
+            let trackingTimer = null;
+            let liveTrainNo = null;
+            let liveRouteLayer = null;
+            let liveStopsLayer = null;
+            let isFollowing = true;
+            let lastUpdateTs = Date.now();
+            
+            const POLL_MS = 30000; // 30 seconds
+
+            async function startTracking() {
+                const input = document.getElementById('live-train-input');
+                if (!input) return;
+                const trainNo = input.value.trim();
+                if (!trainNo) return;
+                
+                liveTrainNo = trainNo;
+                document.getElementById('hdr-train').textContent = trainNo;
+                document.getElementById('sim-mode-badge').textContent = "● LIVE TRACKING";
+                document.getElementById('sim-mode-badge').className = "text-[#00ff66] font-bold tracking-widest";
+                document.getElementById('hdr-data-text').textContent = "FETCHING...";
+                document.getElementById('hdr-data-text').className = "text-cmd-warning";
+                document.getElementById('live-train-details').classList.remove('hidden');
+                
+                // Stop any running simulation
+                if (window.simInterval) clearInterval(window.simInterval);
+                window.simRunning = false;
+                
+                addTimelineEvent(`Initiated Live Tracking for Train ${trainNo}`, 'info');
+                
+                // Fetch Route GeoJSON once
+                try {
+                    const rRes = await fetch(`/api/railradar/route/${trainNo}`);
+                    if (rRes.ok) {
+                        const rData = await rRes.json();
+                        drawLiveRoute(rData);
+                    } else {
+                        addCollabEvent('SYSTEM', 'Failed to fetch live route geometry.', 'FAILED', 'danger');
+                    }
+                } catch(e) { console.error("Route fetch failed", e); }
+                
+                // Start polling live data
+                if (trackingTimer) clearInterval(trackingTimer);
+                pollLiveData(); 
+                trackingTimer = setInterval(pollLiveData, POLL_MS);
+            }
+
+            function drawLiveRoute(data) {
+                if (!locoMap) return;
+                
+                if (liveRouteLayer) locoMap.removeLayer(liveRouteLayer);
+                if (liveStopsLayer) locoMap.removeLayer(liveStopsLayer);
+                if (window.routeLine) locoMap.removeLayer(window.routeLine); // remove sim route
+                
+                // 1. Draw Route Line (assuming GeoJSON is in data.route or data is the GeoJSON)
+                const geojson = data.route || data;
+                if (geojson && (geojson.type === 'FeatureCollection' || geojson.type === 'LineString' || geojson.type === 'Feature')) {
+                    liveRouteLayer = L.geoJSON(geojson, {
+                        style: {
+                            color: '#00ff66',
+                            weight: 4,
+                            opacity: 0.7,
+                            dashArray: '5, 5'
+                        }
+                    }).addTo(locoMap);
+                    
+                    locoMap.fitBounds(liveRouteLayer.getBounds());
+                }
+
+                // 2. Draw Station Stops (assuming data.stops array)
+                const stops = data.stops || [];
+                liveStopsLayer = L.layerGroup().addTo(locoMap);
+                stops.forEach(stn => {
+                    const lat = stn.latitude || stn.lat;
+                    const lng = stn.longitude || stn.lng || stn.lon;
+                    if (!lat || !lng) return;
+                    
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: 5,
+                        fillColor: '#00ff66',
+                        color: '#041024',
+                        weight: 2,
+                        fillOpacity: 0.8
+                    });
+                    
+                    marker.bindTooltip(`<div style="font-family:'Share Tech Mono'; text-transform:uppercase; font-size:11px;">STATION<br><span style="color:#00ff66; font-weight:bold;">${stn.name || 'UNKNOWN'}</span><br><span style="color:#888; font-size:10px;">${stn.code || ''}</span></div>`, {
+                        direction: 'top'
+                    });
+                    liveStopsLayer.addLayer(marker);
+                });
+            }
+
+            async function pollLiveData() {
+                if (!liveTrainNo) return;
+                try {
+                    const res = await fetch(`/api/railradar/live/${liveTrainNo}`);
+                    if (!res.ok) {
+                        handleFetchError(res.status);
+                        return;
+                    }
+                    const data = await res.json();
+                    updateLiveUI(data);
+                } catch(e) {
+                    handleFetchError('NETWORK_ERROR');
+                }
+            }
+
+            function handleFetchError(err) {
+                document.getElementById('hdr-data-text').textContent = "API FAILURE";
+                document.getElementById('hdr-data-text').className = "text-[#ff3333]";
+                document.getElementById('hdr-data-status').innerHTML = `<span class="text-gray-500">DATA</span> <span class="text-[#ff3333]">⚠ LIVE DATA UNAVAILABLE</span> <span class="text-gray-500 text-[10px]">Failed: ${err}</span>`;
+            }
+
+            function updateLiveUI(data) {
+                lastUpdateTs = Date.now();
+                document.getElementById('hdr-data-status').innerHTML = `<span class="text-gray-500">DATA</span> <span class="text-[#00ff66]">LIVE ●</span> <span class="text-gray-500 text-[10px]" id="hdr-data-age">Just now</span>`;
+                
+                // Parse RailRadar normalized data
+                const lat = data.latitude || data.lat || 0;
+                const lng = data.longitude || data.lon || data.lng || 0;
+                const speed = data.speed || data.currentSpeed || 0;
+                const delay = data.delay || data.delayMinutes || 0;
+                const bearing = data.bearingDegrees || data.bearing || 0;
+                const trainName = data.trainName || data.name || "LIVE TRAIN";
+                const nextStn = data.nextHalt || data.nextStation || "UNKNOWN";
+                const distToNext = data.distanceToNext || "N/A";
+                const status = data.status || "RUNNING";
+                const direction = data.direction || "FORWARD";
+
+                // Update locoState
+                locoState.speed = speed;
+                locoState.delay = delay;
+                locoState.location.lat = lat;
+                locoState.location.lng = lng;
+                locoState.nextStation = nextStn;
+                locoState.trainName = trainName;
+
+                // Update Dashboard Elements
+                document.getElementById('hdr-name').textContent = trainName;
+                document.getElementById('val-speed').textContent = Math.round(speed);
+                document.getElementById('val-next-stn').textContent = nextStn;
+                document.getElementById('val-distance').textContent = typeof distToNext === 'number' ? distToNext.toFixed(1) + ' KM' : distToNext;
+                document.getElementById('val-diff').textContent = (delay > 0 ? '+'+delay : delay) + ' min delay';
+                
+                if (delay > 0) {
+                    document.getElementById('val-diff').className = 'text-cmd-warning';
+                } else {
+                    document.getElementById('val-diff').className = 'text-cmd-success';
+                }
+
+                // Move train marker
+                if (trainMarker && lat && lng) {
+                    const pos = [lat, lng];
+                    
+                    // Rotate marker using bearing
+                    const iconHtml = `<div style="transform: rotate(${bearing}deg); transition: transform 0.5s;">
+                        <div style="width: 14px; height: 14px; background: #00ff66; border: 2px solid #fff; box-shadow: 0 0 10px #00ff66; clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>
+                    </div>`;
+                    
+                    const liveIcon = L.divIcon({
+                        html: iconHtml,
+                        className: '',
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+                    
+                    trainMarker.setIcon(liveIcon);
+                    trainMarker.setLatLng(pos);
+                    trainMarker.setTooltipContent(
+                        `<div style="font-family:'Share Tech Mono'; text-transform:uppercase; font-size:11px; color:#00ff66;">TRN ${liveTrainNo}<br>${trainName}<br><span style="color:#00ff66">${Math.round(speed)} km/h</span><br>Delay: ${delay}m</div>`
+                    );
+
+                    if (isFollowing) {
+                        locoMap.panTo(pos, { animate: true, duration: 1.0 });
+                    }
+                }
+
+                // Risk generation based on live data
+                if (delay > 15) {
+                    createRisk({
+                        category: 'SCHEDULE',
+                        severity: delay > 45 ? 'CRITICAL' : 'HIGH',
+                        title: 'Live Train Delay Detected',
+                        description: `Train is delayed by ${delay} minutes.`,
+                        trigger: `Live data reported delay > 15m`,
+                        confidence: 95,
+                        nextStep: 'Adjust corridor schedule padding.',
+                        source: 'RAILRADAR LIVE',
+                        why: 'Network congestion or speed restrictions detected via live feed.'
+                    });
+                }
+            }
+
+            function toggleFollow() {
+                const cb = document.getElementById('toggle-follow');
+                if (cb) {
+                    isFollowing = cb.checked;
+                    if (isFollowing && trainMarker) {
+                        locoMap.panTo(trainMarker.getLatLng(), { animate: true, duration: 1.0 });
+                    }
+                }
+            }
+
+            // Update time since last fetch
+            setInterval(() => {
+                const el = document.getElementById('hdr-data-age');
+                if (el && liveTrainNo && lastUpdateTs) {
+                    const sec = Math.floor((Date.now() - lastUpdateTs) / 1000);
+                    if (sec > 60) {
+                        el.textContent = Math.floor(sec/60) + 'm ' + (sec%60) + 's ago';
+                        if (sec > window.LIVE_REFRESH_INTERVAL / 1000 + 10) {
+                            el.className = 'text-cmd-warning text-[10px]';
+                            document.getElementById('hdr-data-text').textContent = "⚠ DATA STALE";
+                        }
+                    } else {
+                        el.textContent = sec + 's ago';
+                    }
+                }
+            }, 1000);
+
+            return {
+                startTracking,
+                toggleFollow
+            };
+        })();
+
+</script>
+</body>
+</html>
+

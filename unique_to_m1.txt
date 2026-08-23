@@ -1,0 +1,158 @@
+<select id="sim-train-select" class="rv-select">${ROUTES.map(r => `<option>${r.name}</option>`).join('')}</select>
+emrg: { risk_level: "HIGH", incidents: "Track clamping initiated. Prevented derailment.", passenger_impact: "22,000 pax delayed." }
+return data;
+{ id: '22416', name: 'Mumbai Rajdhani', route: 'R2', progress: 0.62, delay: 15, speed: 120, cat: 'Rajdhani' },
+<div class="mt-4 mb-2">
+{ via: 'PF 1-3 Concourse Bottleneck', trains: res.platform_conflicts, time: 'Clearing ' + Math.round(20 * M) + ' min' },
+<div style="height:6px;background:#000;border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:${currentCrowdLevel}%;background:${cCo};border-radius:3px"></div></div>
+deploymentsHtml = `
+} finally {
+<div style="font-size:28px;font-weight:900;color:${cCo};font-family:'JetBrains Mono',monospace;margin-bottom:6px">${currentCrowdLevel}%</div>
+renderTacticalRecommendations(resContainer, base, alerts, prediction.recommended_deployments);
+<div class="text-[10px] text-gray-400 font-bold mb-1">RPF/SECURITY</div>
+<div class="text-lg text-white font-mono">${deployments.ticketing || 0}</div>
+ops: { critical_issues: "Heavy fog NDLS-CNB sector. 14 trains delayed >3hrs.", alerts: "Low-visibility protocols active." },
+<input id="sim-delay-slider" type="range" min="10" max="180" value="60" class="rv-input-range" style="accent-color:#FF9500" oninput="document.getElementById('sim-delay-display').innerText = this.value + ' min'; runSimulation()">
+ops: { critical_issues: "25kV OHE failure near Warangal. Pantograph entanglement.", action_required: "Tower car dispatched." },
+const prediction = crowdData.data.prediction;
+let hourly = [];
+} else if (currentSimScenario === 'blockage') {
+res.risk = 'CRITICAL';
+res.platform_conflicts = Math.round(5 * M);
+// Call Backend Groq API for tactical
+<div class="rv-section-title mb-2" style="color: #00FF94;">RESOURCE DEPLOYMENT</div>
+res.affected_trains = Math.round(6 * M);
+animation: trainMove 8s linear infinite;
+const trainSelect = document.getElementById('sim-train-select');
+<rect x="54" y="20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+// Fallback math calculation
+<div class="text-[10px] text-gray-400 font-bold mb-1">CLEANING</div>
+const AI_SCENARIOS = [
+const crowdRes = await fetch('http://localhost:3000/api/predict/crowd', {
+const delayMins = slider ? parseInt(slider.value) : 60;
+res.affected_trains = Math.round(12 * M);
+<input id="sim-delay-slider" type="range" min="10" max="180" value="60" class="rv-input-range" style="accent-color:#A855F7" oninput="document.getElementById('sim-delay-display').innerText = this.value + ' min'; runSimulation()">
+// Re-render chart and station status using the real AI data
+<select id="sim-train-select" class="rv-select">${STATIONS.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select>
+} else if (res.options) {
+renderAgentResult(ag.id, AGENT_FALLBACK[ag.id], ag.color);
+res.risk = M > 1 ? 'CRITICAL' : 'HIGH';
+festival: document.getElementById('crowd-festival-btn').classList.contains('active')
+// Randomly select a scenario
+renderAgentProcessing(ag.id);
+plat: { platform_changes: "ANVT Pt 1-3 dedicated to eastbound specials.", conflict_resolutions: "Use pull-push locos." },
+res.platform_conflicts = Math.round(8 * M);
+<div class="text-lg text-white font-mono">${deployments.cleaning || 0}</div>
+plat: { platform_changes: "Vijayawada (BZA) platforms reassigned for stacked trains." },
+{ via: 'Alternate Sector A', trains: Math.round(8 * M), time: Math.round(40 * M) + ' min delay' },
+sched: { rerouting: "Terminate 12124 at Pune.", speed_adjustments: "10km/h restriction on submerged tracks." },
+if (agentData) {
+{ train: 'Freight Loco', reason: 'Ripple effect', delay: Math.round(8 * M) }
+// Now render each agent with the AI data
+hourly = Array.from({ length: 24 }, (_, h) => {
+}, 600);
+<select id="sim-train-select" class="rv-select">${TRAINS_DATA.map(t => `<option value="${t.id}">${t.id} — ${t.name}</option>`).join('')}</select>
+function renderCrowdStationCard(aiPrediction = null) {
+event: crowdParams.festival ? 'festival' : 'None'
+renderAgentResult(ag.id, agentData, ag.color);
+<input id="sim-delay-slider" type="range" min="10" max="180" value="60" class="rv-input-range" style="accent-color:#FF3B60" oninput="document.getElementById('sim-delay-display').innerText = this.value + ' min'; runSimulation()">
+<div style="font-size:12px;color:#4A6580">${r.trains > 0 ? r.trains + ' trains · ' : ''}${r.time}</div>
+await new Promise(r => setTimeout(r, 100));
+// If we have AI prediction, use its current_status.crowd_level, otherwise fallback to station.crowd
+res.affected_trains = Math.round(22 * M);
+<rect x="76" y="20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+const crowdParams = {
+res.passenger_impact = Math.round(4300 * M);
+if (!crowdRes.ok) throw new Error("Crowd API response not ok");
+emrg: { risk_level: "MEDIUM", incidents: "Trains stalled without AC.", action_plan: "WDP4D diesel loco attached." }
+emrg: { risk_level: "CRITICAL", incidents: "Flash flooding on tracks.", action_plan: "De-energize OHE." }
+<rect x="10" y="20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+const selectedTrain = trainSelect ? trainSelect.options[trainSelect.selectedIndex].text : 'Unknown';
+<div class="text-lg text-white font-mono">${deployments.rpf || 0}</div>
+btn.innerHTML = `<span class="rv-spin mr-2 inline-block">⟳</span> [ /// SIMULATING CASCADE... /// ]`;
+<div class="text-[10px] text-gray-400 font-bold mb-1">TICKETING</div>
+if (aiPrediction && aiPrediction.hourly_forecast) {
+hour: hr,
+{ train: 'Downstream Exp 1', reason: 'Platform held for ' + selectedTrain.split(' ')[0], delay: Math.round(18 * M) },
+<div style="font-size:13px;font-weight:600;margin-bottom:1px">${r.via}</div>
+plat: { platform_changes: "NDLS Pt 1-4 held for arriving premium trains.", conflict_resolutions: "Shift departures." },
+emrg: { risk_level: "MEDIUM", incidents: "Visibility drop.", action_plan: "Fog pass devices distributed.", passenger_impact: "45,000 pax delayed." }
+renderCrowdStationCard(prediction);
+logAgent(`<span class='text-cmd-danger'>[SYS] GROQ ORCHESTRATION FAILED. USING FALLBACKS.</span>`);
+res.passenger_impact = Math.round(18500 * M);
+<line x1="2" y1="40" x2="8" y2="40" stroke="currentColor" stroke-width="2"/>
+logAgent(`[SYS] ${ag.name.toUpperCase()} AGENT DEPLOYED...`);
+plat: { platform_changes: "Howrah (HWH) platform reshuffle.", crowd_redistribution: "Clear South concourse for delayed pax." },
+emrg: { risk_level: "HIGH", incidents: "Crowd crush potential at unreserved coaches.", action_plan: "Medical kiosks standby." }
+<div class="flex justify-between mb-1"><label class="rv-form-label">SURGE DURATION</label><span id="sim-delay-display" class="text-[12px] font-mono text-cmd-warning font-semibold">60 min</span></div>
+if (aiPrediction && aiPrediction.current_status) {
+// Call upgraded Crowd AI Backend
+const insights = await fetchMultiAgentInsights();
+<div class="grid grid-cols-3 gap-2">
+is_weekend: crowdParams.weekend,
+<div class="flex justify-between mb-1"><label class="rv-form-label">DELAY DURATION</label><span id="sim-delay-display" class="text-[12px] font-mono text-cmd-warning font-semibold">60 min</span></div>
+logAgent(`[SYS] ORCHESTRATION COMPLETE. SCENARIO LOADED.`);
+let deploymentsHtml = '';
+stationId: station.id || 'NDLS',
+const tObj = { marker, zoneId, trainNum: trnObj.num, trainName: trnObj.name, from, to, path, progress, speed: (Math.random() * 0.005) + 0.001, isDelayed, hasTriggeredEvent: isDelayed, type: tier.type, minZoom: tier.minZoom };
+currentCrowdLevel = aiPrediction.current_status.crowd_level;
+sched: { rerouting: "Divert freight via Moradabad.", speed_adjustments: "60km/h speed limit.", priority_changes: "Priority to Rajdhani." },
+res.options = [
+ops: { critical_issues: "Waterlogging Kurla-Sion. Local trains suspended on slow line.", alerts: "Halt incoming at Kalyan." },
+<div class="flex justify-between mb-1"><label class="rv-form-label">BLOCKAGE DURATION</label><span id="sim-delay-display" class="text-[12px] font-mono text-cmd-warning font-semibold">60 min</span></div>
+sched: { rerouting: "Divert via Amta line.", speed_adjustments: "20km/h manual clamping speed restriction." },
+{ via: 'Freight Loop Diversion', trains: Math.round(14 * M), time: Math.round(75 * M) + ' min delay' }
+const data = AI_SCENARIOS[Math.floor(Math.random() * AI_SCENARIOS.length)];
+{ via: 'Holding Area Capacity', trains: 0, time: Math.min(100, Math.round(70 * M)) + '% Full' }
+plat: { platform_changes: "CSMT Pt 15-18 reserved for stranded outstation trains." },
+${deploymentsHtml}
+function renderTacticalRecommendations(container, density, alerts, deployments = null) {
+<path d="M0 45 L0 15 Q0 10 5 10 L115 10 Q120 10 120 15 L120 45 Z" fill="rgba(0,229,255,0.15)" stroke="currentColor" stroke-width="2" />
+crowd: { staff_deployment: "Deploy commercial staff to distribute water/food to stalled trains." },
+await new Promise(r => setTimeout(r, 1200));
+{ train: 'Connecting Pass', reason: 'Track slot occupied', delay: Math.round(12 * M) },
+let res = { risk: 'HIGH', affected_trains: 0, platform_conflicts: 0, passenger_impact: 0, cascade: [], options: [], recs: [] };
+let metricsHtml = `
+async function fetchMultiAgentInsights() {
+ops: { critical_issues: "Ultrasonic flaw detector flags micro-fracture at Santragachi.", alerts: "UP line suspended." },
+const agentData = insights[ag.id];
+res.platform_conflicts = Math.round(11 * M);
+sched: { rerouting: "Single-line working on DOWN line.", speed_adjustments: "30km/h block speed.", priority_changes: "Chennai Rajdhani priority." },
+<rect x="25" y="20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+let v = (currentCrowdLevel * 0.45) + Math.sin((h - 5.5 + (stSeed * 0.5)) * Math.PI / 12) * (20 + stSeed * 2);
+// Simulate AI processing delay
+<rect x="32" y="20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+<line x1="2" y1="43" x2="8" y2="43" stroke="currentColor" stroke-width="2"/>
+crowd: { gate_changes: "All 6 entry gates on scanner-only.", passenger_routing: "Color-coded queues for Bihar bound." },
+res.recs = ['Open auxiliary gates immediately', 'Deploy extra RPF at bottleneck points', 'Clear holding areas and redirect flow'];
+<path d="M0 45 L0 12 Q0 8 5 8 L60 8 L95 28 Q100 32 100 45 Z" fill="rgba(0,229,255,0.15)" stroke="currentColor" stroke-width="2" />
+btn.innerHTML = `<span class="rv-spin">⟳</span> [ /// ORCHESTRATING... /// ]`;
+sched: { rerouting: "Inject empty rake from Sahibabad yard.", priority_changes: "Green channel to Patna (PNBE)." },
+res.passenger_impact = Math.round(9800 * M);
+let currentCrowdLevel = station.crowd;
+ops: { critical_issues: "Unprecedented surge at Anand Vihar (ANVT). Train 12394 at 250% capacity." },
+const crowdData = await crowdRes.json();
+<path d="M-500 56 L1500 56" stroke="currentColor" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.4" />
+const M = delayMins / 60;
+crowd: { passenger_routing: "Shift departing crowds to New Complex.", staff_deployment: "+15 RPF at HWH Cab Road." },
+hourly = aiPrediction.hourly_forecast.map((v, h) => ({ h, v }));
+crowd: { gate_changes: "Open Ajmeri Gate auxiliary exit.", staff_deployment: "+20 RPF deployed.", passenger_routing: "Segregate flow." },
+<rect x="98" y="20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+crowd: { gate_changes: "Close flooded Dadar subway.", staff_deployment: "Deploy NDRF liaison + 30 RPF at CSMT." },
+if (deployments) {
+res.cascade = [
+const slider = document.getElementById('sim-delay-slider');
+res.recs = ['Reroute upstream traffic', 'Reassign platform slots at next junction', 'Notify downstream station masters'];
+weekend: document.getElementById('crowd-weekend-btn').classList.contains('active'),
+const base = prediction.current_status.crowd_level;
+<rect x="40" y="15" width="10" height="25" fill="none" stroke="currentColor" stroke-width="1.5" />
+// Set all agents to processing state first
+<div class="bg-[#041024] border border-[#1a365d] p-2 rounded text-center">
+logAgent(`<span class='text-cmd-accent'>[SYS] INITIATING FULL MULTI-AGENT ORCHESTRATION SEQUENCE TO GROQ.</span>`);
+<div style="font-size:12px;color:#4A6580;margin-top:1px">Live Dynamic Calculation for ${selectedTrain} @ ${delayMins}min</div>
+// Use the exact 24 hour forecast from the AI
+res.recs = ['Initiate single-line working on adjacent track', 'Divert freight to external loops', 'Issue emergency notifications to station masters'];
+${res.recs.map(r => `<div class="rv-bullet"><span class="rv-bullet-icon text-cmd-accent">▸</span><span class="rv-bullet-text">${r}</span></div>`).join('')}
+console.error("Multi-Agent Error:", error);
+<div class="rv-section-title text-cmd-accent">CONGESTION & REROUTES</div>
+const cCo = currentCrowdLevel > 85 ? '#FF3B60' : currentCrowdLevel > 68 ? '#FF9500' : currentCrowdLevel > 42 ? '#FFD700' : '#00FF94';

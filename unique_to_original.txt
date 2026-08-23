@@ -1,0 +1,113 @@
+<div class="text-[12px] text-gray-500 font-mono mt-1">XGBOOST ┬╖ LIGHTGBM ┬╖ RANDOM FOREST
+<rect x="20" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+{ id: 'CNB', name: 'Kanpur', x: 255, y: 174, platforms: 10, crowd: 67, incoming: 7, status: 'busy' },
+logAgent(`[AI] QUERY DISPATCHED ΓåÆ LOCAL NEURAL ENGINE`, 'text-cmd-accent');
+┬╖ ORCHESTRATED DEPLOYMENT</div>
+<circle cx="330" cy="50" r="5" fill="currentColor" />
+<rect x="-220" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+{ id: 'NDLS', name: 'New Delhi', x: 175, y: 88, platforms: 16, crowd: 78, incoming: 12, status: 'busy' },
+plat: { platform_changes: ['Move Train 15003 to Platform 4 at Prayagraj Jn', 'Reassign Platform 7 at Varanasi for Rajdhani overflow'], conflict_resolutions: ['12301 ΓåÆ Platform 1, 15003 ΓåÆ Platform 4 ΓÇö conflict cleared at 15:05'], crowd_redistribution: ['Open exit gates A, B, C at Mumbai CST simultaneously'], insight: 'Platform 4 allocation reduces conflict and improves concourse flow by 35%.' },
+${res.cascade_effects.map(i => `<div class="rv-bullet"><span class="rv-bullet-icon text-cmd-danger">Γû╕</span><span class="rv-bullet-text">${i}</span></div>`).join('')}
+<circle cx="-10" cy="50" r="5" fill="currentColor" />
+btn.innerHTML = `<span class="rv-spin">Γƒ│</span> ORCHESTRATING...`;
+<div class="rv-bullet"><span class="rv-bullet-icon text-cmd-warning">Γû╕</span><span class="rv-bullet-text">Station congestion creating platform hold-back at next major junction</span></div>
+<div style="font-size:11px;font-weight:700;background:${cCo}18;color:${cCo};padding:3px 8px;border-radius:4px;margin-bottom:5px">${crowdLabel}</div>
+{ id: 'CSTM', name: 'Mumbai CST', x: 104, y: 346, platforms: 18, crowd: 94, incoming: 18, status: 'critical' },
+{ id: 'HWH', name: 'Kolkata (Howrah)', x: 484, y: 244, platforms: 23, crowd: 87, incoming: 15, status: 'busy' },
+<div style="font-size:13px;color:#4A6580;text-align:center;max-width:440px">Analyzing cascade effects ┬╖ calculating passenger impact ┬╖ generating strategic response plan</div>
+<div style="font-size:12px;color:#4A6580">Gates: <span style="color:#E8F4FD;font-weight:600">${gates}</span></div>
+const cCo = base > 85 ? '#FF3B60' : base > 68 ? '#FF9500' : base > 42 ? '#FFD700' : '#00FF94';
+≡ƒö« SIMULATE SCENARIO
+term.innerHTML += `<div class="text-cmd-success"><span class="text-gray-500">[SYS]</span> GEO-FENCE DEPLOYED: ${name} (${startName} ΓåÆ ${endName})</div>`;
+{ id: 'SC', name: 'Hyderabad', x: 256, y: 380, platforms: 10, crowd: 70, incoming: 8, status: 'busy' },
+{ id: 'PNBE', name: 'Patna', x: 392, y: 174, platforms: 10, crowd: 73, incoming: 7, status: 'busy' },
+<div style="font-size:12px;color:#4A6580">${r.trains} trains ┬╖ +${r.time}</div>
+let v = 30 + Math.sin((h - 5.5) * Math.PI / 12) * 28;
+<!-- Windows -->
+<div style="font-size:10px;color:#00E5FF;font-weight:700;margin-bottom:3px;letter-spacing:0.07em">PASSENGER ADVISORY</div>
+if (h >= 8 && h <= 10) v += 24; if (h >= 17 && h <= 20) v += 28;
+btn.innerHTML = `ΓÜí RUN DELAY PREDICTION`;
+const staff = Math.round(base / 14) + 3;
+{ id: 'LKO', name: 'Lucknow', x: 278, y: 161, platforms: 9, crowd: 60, incoming: 6, status: 'normal' },
+<circle cx="-130" cy="50" r="5" fill="currentColor" />
+<path d="M30 45 L30 10 L-100 10 L-100 45 Z" fill="rgba(0,229,255,0.15)" stroke="currentColor"
+<rect x="-170" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+<div class="rv-bullet"><span class="rv-bullet-icon text-purple-500">Γû╕</span><span class="rv-bullet-text">Activate full digital announcement and display system</span></div>
+<div class="text-[12px] text-gray-500 font-mono mt-1">5 SPECIALIZED AGENTS ┬╖ LOCAL HEURISTIC AI
+${(res.recs || res.advisories || []).map(r => `<div class="rv-bullet"><span class="rv-bullet-icon text-cmd-accent">Γû╕</span><span class="rv-bullet-text">${r}</span></div>`).join('')}
+<div class="rv-bullet"><span class="rv-bullet-icon text-purple-500">Γû╕</span><span class="rv-bullet-text">Open overflow waiting area on Platform 8-9</span></div>
+whatIfContainer.innerHTML = queries.map(q => `<button onclick="document.getElementById('whatif-input').value='${q}'; runWhatIf()" style="padding:4px 10px;background:#0F1F3D;border:1px solid #1a365d;border-radius:20px;color:#4A6580;font-size:11px;cursor:pointer;font-family:'Share Tech Mono',monospace;max-width:290px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Γ£ª ${q.slice(0, 52)}...</button>`).join('');
+<circle cx="-160" cy="50" r="5" fill="currentColor" />
+<rect x="-30" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+blockage: { reroutes: 3, affected_trains: 22, delay_range: '45-90 min', passenger_impact: 18500, resolution: '4-6 hours', options: [{ via: 'Lucknow ΓÇô Sultanpur alternate', trains: 8, time: '55 min extra' }, { via: 'Agra ΓÇô Etawah diversion', trains: 7, time: '40 min extra' }, { via: 'Bhopal ΓÇô Jhansi bypass', trains: 7, time: '90 min extra' }] },
+<div style="font-size:38px;font-weight:900;color:${cCo};font-family:'JetBrains Mono',monospace;line-height:1">${base}%</div>
+<div class="text-center"><div class="rv-spin" style="font-size:30px">ΓÅ▒</div><div class="text-[13px] text-gray-500 mt-3 animate-pulse">COMPUTING CASCADE PROPAGATION...</div></div>
+{ id: 'MAS', name: 'Chennai Central', x: 333, y: 454, platforms: 17, crowd: 76, incoming: 10, status: 'busy' },
+<div style="font-size:13px;color:#4A6580;margin-top:2px">At ${hr}:00</div>
+ZONE... ALL SECTORS OPERATIONAL... αñ░αñ╛αñ╖αÑìαñƒαÑìαñ░αÑÇαñ» αñ░αÑçαñ▓ αñòαñ«αñ╛αñ¿... STANDING BY FOR COMMANDS...
+<div class="flex justify-between items-start mb-3" style="width:100%">
+resContainer.style.alignItems = 'flex-start';
+<div class="rv-bullet"><span class="rv-bullet-icon text-purple-500">Γû╕</span><span class="rv-bullet-text">Deploy additional RPF staff at all primary entry gates</span></div>
+crowdStation.addEventListener('change', renderCrowdStationCard);
+<div style="font-size:12px;color:#4A6580">${station.incoming} trains arriving ┬╖ ${station.platforms} platforms</div>
+<div class="text-gray-400">PATH: ${startName} ΓåÆ ${endName}</div>
+term.innerHTML += `<div class="text-cmd-accent mt-1"><span class="text-white">[WEATHER API]</span> MUMBAI: ${temp}┬░C, Wind: ${wind} km/h, Code: ${code}</div>`;
+return `<div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="width:100%;height:${data.v}%;background:${isCur ? '#A855F7' : hColor + '70'};border-radius:2px 2px 0 0;border:${isCur ? '1px solid #A855F7' : 'none'};min-height:2px;transition:height 0.4s"></div></div>`;
+btn.innerHTML = `<span class="rv-spin" style="font-size:16px">Γƒ│</span> Analyzing...`;
+{ id: 'NGP', name: 'Nagpur', x: 246, y: 306, platforms: 8, crowd: 56, incoming: 5, status: 'normal' },
+<rect x="-80" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+stroke-width="2" />
+<rect x="140" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+<rect x="340" y="20" width="30" height="12" fill="currentColor" opacity="0.8" />
+/* ΓöÇΓöÇΓöÇ RailVerseAI Module Styles ΓöÇΓöÇΓöÇ */
+Γû╢ RUN
+{ id: 'BSB', name: 'Varanasi', x: 346, y: 186, platforms: 9, crowd: 84, incoming: 8, status: 'busy' },
+<div style="font-size:14px;font-weight:700">Simulation Complete ΓÇö ${cur.name}</div>
+const crowdLabel = base > 85 ? 'CRITICAL' : base > 68 ? 'HEAVY' : base > 42 ? 'MODERATE' : 'SPARSE';
+<rect x="190" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+document.getElementById(`ag-btn-${id}`).innerText = 'Γå╗ RE-RUN';
+<rect x="50" y="20" width="30" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+<!-- Wheels -->
+class="text-base text-cmd-success ml-2 font-mono">Γû▓</span></div>
+btn.innerHTML = `<i data-lucide="cloud" class="w-4 h-4 mr-2 inline"></i> WEATHER NOMINAL (${temp}┬░C, ${wind} km/h)`;
+btn.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 mr-2 inline"></i> SEVERE WEATHER (${temp}┬░C, ${wind} km/h)`;
+<rect x="290" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+<div class="rv-insight-box" style="border-color:#00E5FF;margin-bottom:10px">
+<div class="text-center"><div class="flex justify-center mb-2 text-purple-500"><i data-lucide="eye" class="w-8 h-8 animate-pulse"></i></div><div class="text-[13px] text-gray-500 mt-3 animate-pulse">ANALYZING CROWD DYNAMICS...</div></div>
+const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=19.0760&longitude=72.8777&current_weather=true');
+<rect x="-120" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+<svg viewBox="-300 0 700 60" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="w-full h-16">
+class="text-cmd-warning text-lg ml-2">| αñ¡αñ╛αñ░αññαÑÇαñ» αñ░αÑçαñ▓ αñòαñ«αñ╛αñ¿</span></h1>
+<path d="M-110 45 L-110 10 L-250 10 L-250 45 Z" fill="rgba(0,229,255,0.15)" stroke="currentColor"
+<circle cx="100" cy="50" r="5" fill="currentColor" />
+<path d="M400 45 L400 25 Q400 10 370 10 L40 10 L40 45 Z" fill="rgba(0,229,255,0.15)"
+// Fetch weather for Mumbai
+<circle cx="-40" cy="50" r="5" fill="currentColor" />
+<circle cx="360" cy="50" r="5" fill="currentColor" />
+<rect x="90" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+<div class="train-animation whitespace-nowrap text-[#00E5FF] w-[800px]">
+<span class="text-sm tracking-[0.1em] opacity-90">αñ¡αñ╛αñ░αññαÑÇαñ» αñ░αÑçαñ▓ αñòαñ«αñ╛αñ¿</span>
+<div class="rv-bullet"><span class="rv-bullet-icon text-cmd-warning">Γû╕</span><span class="rv-bullet-text">Cascading delay from preceding train occupying track slot</span></div>
+${res.key_impacts.map(i => `<div class="rv-bullet"><span class="rv-bullet-icon text-cmd-warning">Γû╕</span><span class="rv-bullet-text">${i}</span></div>`).join('')}
+<select class="rv-select">${TRAINS_DATA.map(t => `<option value="${t.id}">${t.id} ΓÇö ${t.name}</option>`).join('')}</select>
+<div class="rv-bullet"><span class="rv-bullet-icon text-cmd-warning">Γû╕</span><span class="rv-bullet-text">Weather conditions reducing safe operating speed on corridor</span></div>
+ops: { status: 'ALERT', critical_issues: ['Platform conflict at Prayagraj Jn ΓÇö Trains 12301 & 15003', 'Mumbai CST crowd threshold breached at 94%'], alerts: ['Train 22416: +15min on Western Line', 'Train 15003: +35min approaching Kanpur'], insight: 'Western Line congestion propagating secondary delays into Grand Trunk corridor.', action_required: 'Immediate rescheduling of Prayagraj platform assignments required.' },
+{ id: 'BPL', name: 'Bhopal', x: 196, y: 246, platforms: 6, crowd: 49, incoming: 5, status: 'normal' },
+<div style="text-align:right">
+btn.innerHTML = `ΓÜí DEPLOY ALL AGENTS`;
+MODULE // αñ¡αñ╛αñ░αññαÑÇαñ» αñ░αÑçαñ▓</span>
+const gates = Math.round(base / 18) + 2;
+<div style="font-size:12px;color:#4A6580">Staff: <span style="color:#E8F4FD;font-weight:600">${staff}</span></div>
+<!-- Train Body -->
+<div style="font-size:13px;color:#8BA8C8">Use Platform 1-2 secondary exits to reduce main concourse bottleneck.</div>
+function runCrowdPrediction() {
+crowd: { gate_changes: ['Open all 8 entry gates at Mumbai CST main entrance', 'Activate secondary exit at Prayagraj North Gate'], staff_deployment: ['Deploy 14 staff at Mumbai CST Gates 1-3', 'Deploy 9 staff at Prayagraj Platform'], passenger_routing: ['Redirect to Platform 6-7 via Concourse B at Mumbai'], risk_areas: ['Mumbai CST Gate 1-2 ΓÇö CRITICAL bottleneck', 'Prayagraj platform crossing ΓÇö HIGH'], insight: 'Coordinated deployment at 3 stations reduces crowd risk by estimated 42%.' },
+{ id: 'AGC', name: 'Agra Cantt', x: 208, y: 160, platforms: 8, crowd: 55, incoming: 5, status: 'normal' },
+{ id: 'SBC', name: 'Bengaluru', x: 258, y: 438, platforms: 10, crowd: 65, incoming: 7, status: 'normal' },
+<rect x="240" y="20" width="40" height="12" fill="none" stroke="currentColor" stroke-width="1.5" />
+logAgent(`<span class='text-cmd-danger'>[OPS] ANOMALY: TRN_${trainNum} CRITICAL FAILURE ΓåÆ ${toName}. AI ANALYZING...</span>`);
+{ id: 'JP', name: 'Jaipur', x: 128, y: 148, platforms: 6, crowd: 42, incoming: 4, status: 'normal' },
+triggerRedAlert(`MUMBAI SEVERE WEATHER DETECTED (${temp}┬░C, WIND: ${wind} km/h)`);
+<div class="text-[12px] text-gray-500 font-mono mt-1">LSTM ┬╖ PROPHET ┬╖ RANDOM FOREST
+btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 inline animate-spin"></i> Predicting...`;
+{ id: 'PRYJ', name: 'Prayagraj', x: 310, y: 180, platforms: 10, crowd: 91, incoming: 9, status: 'critical' },

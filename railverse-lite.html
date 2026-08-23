@@ -6793,16 +6793,16 @@ function simulateAction() {
     }
     
     // 3. Set the location
-    const loc = document.getElementById('risk-location-input');
+    const loc = document.getElementById('risk-location-select');
     if(loc) {
         loc.value = 'NDLS';
     }
     
     // 4. Trigger the risk evaluation
-    if (typeof evaluateRiskEngine === 'function') {
-        evaluateRiskEngine();
+    if (typeof assessRisk === 'function') {
+        assessRisk();
     } else {
-        console.error('evaluateRiskEngine is not defined!');
+        console.error('assessRisk is not defined!');
     }
 }
 </script>
